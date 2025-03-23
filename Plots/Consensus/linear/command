@@ -1,0 +1,1 @@
+./run.sh /home/trebelge/Documents/Balboa_Network/Examples/main_consensus.py raspberrypi:2.1,0 raspberrypiZero1:4.0111,0 raspberrypiZero2:2.31,0 raspberrypiZero3:4.32,0 raspberrypiZero4:2.3,0
