@@ -41,16 +41,15 @@ def check_args():
     """
 
     # Check if argument is provided by user
-    if len(sys.argv) != 4:
-        print("Usage: python script.py <ID> <init_state> <i2c>")
+    if len(sys.argv) != 3:
+        print("Usage: python script.py <ID> <init_state>")
         sys.exit(1)
 
     try:
         id = int(sys.argv[1])
         init = float(sys.argv[2])
-        i2c = bool(int(sys.argv[3]))
     except ValueError:
-        print("Error: <ID> must be int, <init_state> must be float and <i2c> must be 0 or 1.")
+        print("Error: <ID> must be int, <init_state> must be float")
         sys.exit(1)
 
     # Check if ID is valid
@@ -58,22 +57,7 @@ def check_args():
         print(f"Error: ID must be between 0 and {len(RPIS_MACS) - 1}.")
         sys.exit(1)
 
-    return id, init, i2c
-
-
-def blink():
-    """
-    Blink Balboa's led at frequency f
-
-    Do not put f too high, otherwise it could monopolize the CPU as python threads
-    use a single core that alternate between threads.
-    """
-
-    while True:
-        rocky.leds(0, 0, 0)
-        time.sleep(1 / f)
-        rocky.leds(1, 1, 1)
-        time.sleep(1 / f)
+    return id, init
 
 
 # ------- Global variables --------
@@ -103,16 +87,14 @@ ID, init_state, i2c = check_args()
 bluetooth = Bluetooth(ID, RPIS_MACS, matrix=ADJACENCY, verbose=False)
 
 # Consensus
-f = init_state
-phase = 0
-consensus = Consensus(bluetooth, init_state)
+localize = Localize(bluetooth, init_state)
 
 # I2C
 if i2c:
     rocky = Balboa()
 
 # data export
-file_path = '/home/trebelge/Documents/Balboa_Network/data/consensus.csv'
+file_path = '/home/trebelge/Documents/Balboa_Network/data/localize.csv'
 signal.signal(signal.SIGINT, signal_handler)
 
 
@@ -127,8 +109,8 @@ if __name__ == "__main__":
         rocky.leds(0, 0, 0)
 
     # Run consensus with a separate thread
-    consensus_thread = threading.Thread(target=consensus.run, daemon=True)
-    consensus_thread.start()
+    localize_thread = threading.Thread(target=localize.run, daemon=True)
+    localize_thread.start()
 
     while True:
         time.sleep(5)

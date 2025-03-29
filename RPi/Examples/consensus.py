@@ -1,6 +1,7 @@
 import numpy as np
 import time
 import struct
+import psutil
 
 
 class Consensus:
@@ -23,7 +24,7 @@ class Consensus:
         """
         self.bluetooth = bt  # Bluetooth class instance
         self.state = init_state  # Initial value of current RPi
-        self.data = []
+        self.data = [[time.time(), init_state, 0]]
         self.buffer = [[-1, -1.0, 0.0] for _ in range(len(bt.RPIS_MACS))]  # Neighbors messages [iteration, value, timestamp]
         self.PROCESS = process_id
 
@@ -50,8 +51,10 @@ class Consensus:
     def get_ACK(self, iteration):
         if iteration == 0:
             return False
-        return any([struct.unpack('<hfh', self.bluetooth.buffer[self.PROCESS][n])[2] != iteration for n in self.bluetooth.neighbors_index])
-
+        try:
+            return any([struct.unpack('<hfh', self.bluetooth.buffer[self.PROCESS][n])[2] != iteration for n in self.bluetooth.neighbors_index])
+        except:
+            return True
 
     def run(self):
         """
@@ -71,7 +74,6 @@ class Consensus:
          first messages has not been sent (self.bluetooth.buffer format would not allow it
          to be unstruct)
         """
-        start_time = time.time()
 
         for i in range(0, 1000):
 
@@ -101,7 +103,8 @@ class Consensus:
 
             # Compute the current mean value between neighbors and itself
             self.state = np.mean([consensus_buffer[n][1] for n in self.bluetooth.neighbors_index] + [self.state])
-            self.data.append([time.time()-start_time, float(self.state)])
+            process = psutil.Process()
+            self.data.append([time.time(), float(self.state), process.memory_info().rss / (1024 * 1024)])
 
             # Print state
             print("state : ", self.state)

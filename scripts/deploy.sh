@@ -12,7 +12,7 @@ if [ "$#" -lt 1 ]; then
     RPIS=("raspberrypi" "raspberrypi4L" "raspberrypiZero1" "raspberrypiZero2" "raspberrypiZero3" "raspberrypiZero4")
 fi
 
-LOCAL_DIR="/home/trebelge/OneDrive/Cours UCL/Thesis/Balboa_Network/RPi"
+LOCAL_DIR="/home/trebelge/OneDrive/Cours UCL/Thesis/Balboa_network/RPi"
 REMOTE_DIR="/home/trebelge/Documents/Balboa_Network"
 
 USER="trebelge"

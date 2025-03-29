@@ -1,13 +1,39 @@
 import matplotlib.pyplot as plt
 import os
 import glob
+plt.rcParams.update({'font.size': 12})
 
+
+n = 100  # Number of iterations
+plot_time = True
+plot_start = True
 
 csv_files = glob.glob(os.path.join('../data/', "*.csv"))
 # Check
 if not csv_files:
     print("Aucun fichier CSV trouvé dans le dossier.")
     exit()
+
+
+start_time = 999999999999999999
+last_start_time = 0
+
+
+def find_closest_index(lst, value):
+    return min(range(len(lst)), key=lambda i: abs(lst[i] - value))
+
+for file_path in csv_files:
+    with open(file_path, 'r') as f:
+        for line in f:
+            start_time = min(float(line.split(',')[0]), start_time)
+            break
+
+    with open(file_path, 'r') as f:
+        lines = f.readlines()
+
+        if len(lines) > 1:
+            last_start_time = max(float(lines[1].split(',')[0]), last_start_time)
+
 
 plt.figure(figsize=(10, 6))
 
@@ -21,27 +47,34 @@ for file_path in csv_files:
         for line in f:
             if line.strip():
                 elem = line.split(",")
-                time.append(float(elem[0]))
+                time.append(float(elem[0]) - start_time)
                 values.append(float(elem[1]))
 
+    if plot_time:
+        plt.plot(time[:n], values[:n], label=file_name)
+        if not plot_start:
+            plt.ylim((-7, 7))
+            plt.xlim((last_start_time - start_time-1, time[n]))
+    else:
+        plt.plot(values[:n], label=file_name)
 
-    plt.plot(time[:30], values[:30], label=file_name)
-    #plt.plot(values[:30], label=file_name)
 
-plt.xlabel("Time [s]")
-plt.ylabel("Value")
-plt.title("Consensus state (30 iterations)")
-#plt.ylim(min(values)-1, max(values)+1)
+plt.title(f"Consensus state ({n} iterations)")
 plt.legend()
+# plt.ylim(min(values)-1, max(values)+1)
 plt.grid(True)
-plt.savefig("linear/linear_time.png")
+
+if plot_time:
+    plt.xlabel("Time [s]")
+    plt.ylabel("Value")
+    if plot_start:
+        plt.savefig("linear_time_start.png")
+    else:
+        plt.savefig("linear_time.png")
+
+else:
+    plt.xlabel("Iteration")
+    plt.ylabel("Value")
+    plt.savefig("linear_it.png")
+
 plt.show()
-"""
-plt.xlabel("Iteration")
-plt.ylabel("Value")
-plt.title("Consensus state (30 iterations)")
-#plt.ylim(min(values)-1, max(values)+1)
-plt.legend()
-plt.grid(True)
-plt.savefig("linear/linear_it.png")
-plt.show()"""

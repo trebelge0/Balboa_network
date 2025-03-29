@@ -91,25 +91,25 @@ class Bluetooth:
         while True:
             try:
                 data = conn.recv(1024)
-                if not data:
-                    break
+                if data:
+                    if self.VERBOSE:
+                        print(f"\nMessage from {addr}: {data}")
 
-                if self.VERBOSE:
-                    print(f"\nMessage from {addr}: {data}")
-
-                for i in range(len(self.RPIS_MACS)):
-                    if addr == self.RPIS_MACS[i]:
-                        try:
-                            p = struct.unpack('<h', data[:2])[0]
-                            if 0 <= p < self.PROCESSES:
-                                self.buffer[p][i] = data[2:]
-                        except:
-                            self.buffer[0][i] = data
+                    for i in range(len(self.RPIS_MACS)):
+                        if addr == self.RPIS_MACS[i]:
+                            try:
+                                p = struct.unpack('<h', data[:2])[0]
+                                if 0 <= p < self.PROCESSES:
+                                    self.buffer[p][i] = data[2:]
+                            except:  # If no process number is provided
+                                self.buffer[0][i] = data
+                else:
+                    print("Erreur: ", data)
             except:
-                break
-        print(f"Disconnected from {addr}")
-        conn.close()
-        del self.connections[addr]
+                print("Reception error")
+        #print(f"Disconnected from {addr}")
+        #conn.close()
+        #del self.connections[addr]
 
 
     def start_server(self):
