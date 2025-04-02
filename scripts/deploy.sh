@@ -9,7 +9,7 @@ if [ "$#" -lt 1 ]; then
     echo "Usage: $0 <IP1> <IP2> ... <IPn>"
 
     echo "Use default IPs"
-    RPIS=("raspberrypi" "raspberrypi4L" "raspberrypiZero1" "raspberrypiZero2" "raspberrypiZero3" "raspberrypiZero4")
+    RPIS=("raspberrypiZero1" "raspberrypiZero2" "raspberrypiZero3" "raspberrypiZero4" "raspberrypi" "raspberrypi41" "raspberrypi42" "raspberrypi4L")
 fi
 
 LOCAL_DIR="/home/trebelge/OneDrive/Cours UCL/Thesis/Balboa_network/RPi"

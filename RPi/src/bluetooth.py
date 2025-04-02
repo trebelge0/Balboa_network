@@ -5,7 +5,7 @@ import struct
 
 
 class Bluetooth:
-    def __init__(self, id, rpis_macs, matrix=False, verbose=False, processes=1):
+    def __init__(self, id, rpis_macs, matrix, verbose=False, processes=1):
         """
         rpis_macs: list of MAC addresses of each RPi
         id: index of the current RPi in rpis_macs
@@ -21,6 +21,7 @@ class Bluetooth:
         self.MAC = rpis_macs[id]
         self.VERBOSE = verbose  # Show received and sent messages
         self.PROCESSES = processes
+        self.ADJACENCY = matrix
 
         self.connections = {}
         self.buffer = []
@@ -28,22 +29,7 @@ class Bluetooth:
             self.buffer.append([-1]*len(rpis_macs))  # List of last messages from each RPi
         self.neighbors = []
         self.neighbors_index = []
-
-        if not matrix:
-            self.initialize_queue()
-        else:
-            self.initialize_neighbors(matrix)
-
-
-    def initialize_queue(self):
-        """
-        Initialize neighbors as a queue
-        """
-
-        if self.ID > 0:
-            self.neighbors.append(self.RPIS_MACS[self.ID - 1])  # Left neighbor
-        if self.ID < len(self.RPIS_MACS) - 1:
-            self.neighbors.append(self.RPIS_MACS[self.ID + 1])  # Right neighbor
+        self.initialize_neighbors(matrix)
 
 
     def initialize_neighbors(self, m):
@@ -104,12 +90,12 @@ class Bluetooth:
                             except:  # If no process number is provided
                                 self.buffer[0][i] = data
                 else:
-                    print("Erreur: ", data)
+                    break
             except:
-                print("Reception error")
-        #print(f"Disconnected from {addr}")
-        #conn.close()
-        #del self.connections[addr]
+                break
+        print(f"Disconnected from {addr}")
+        conn.close()
+        del self.connections[addr]
 
 
     def start_server(self):

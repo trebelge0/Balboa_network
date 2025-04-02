@@ -18,7 +18,7 @@ if [ "$#" -lt 1 ]; then
     echo "Usage: $0 <command> <IP1> <IP2> ... <IPn>"
 
     echo "Use default IPs"
-    RPIS=("raspberrypi" "raspberrypi4L" "raspberrypiZero1" "raspberrypiZero2" "raspberrypiZero3" "raspberrypiZero4")
+    RPIS=("raspberrypiZero1" "raspberrypiZero2" "raspberrypiZero3" "raspberrypiZero4" "raspberrypi" "raspberrypi41" "raspberrypi42" "raspberrypi4L")
 fi
 
 USER="trebelge"
@@ -26,7 +26,7 @@ USER="trebelge"
 SSH_KEY="/home/trebelge/.ssh/id_ed25519"
 
 for HOST in "${RPIS[@]}"; do
-    echo "Reboot $HOST..."
+    echo "Command $HOST $COMMAND"
     ssh -i "$SSH_KEY" "$USER@$HOST" $COMMAND
 done
 

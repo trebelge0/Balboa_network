@@ -57,3 +57,6 @@ class Balboa:
 
   def read_encoders(self):
     return self.read_unpack(39, 4, 'hh')
+
+  def read_uwb(self):
+    return self.read_unpack(43, 8, 'hhhh')

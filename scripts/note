@@ -1,8 +1,13 @@
+./deploy.sh raspberrypiZero1 raspberrypiZero2 raspberrypiZero3 raspberrypiZero4 raspberrypi raspberrypi41 raspberrypi42 raspberrypi4L
+./run.sh /home/trebelge/Documents/Balboa_Network/Examples/main_consensus.py raspberrypiZero1:2.1,0 raspberrypiZero2:4.3,0 raspberrypiZero3:6.7,0 raspberrypiZero4:8.9,0 raspberrypi:-3.2,0 raspberrypi41:-6.3,0 raspberrypi42:-8.2,0 raspberrypi4L:0,0
+./fetch_csv.sh raspberrypiZero1 raspberrypiZero2 raspberrypiZero3 raspberrypiZero4 raspberrypi raspberrypi41 raspberrypi42 raspberrypi4L
 
-./run.sh /home/trebelge/Documents/Balboa_Network/Examples/main_consensus.py raspberrypi:2.5,0 raspberrypizero:0.75,0 raspberrypi4L:1.25,0 raspberrypiZero1:3.5,0 raspberrypiZero2:0.25,0 raspberrypiZero3:1.0,0
+./run.sh /home/trebelge/Documents/Balboa_Network/Examples/main_consensus.py 192.168.164.86:2.1,0 192.168.164.107:4.3,0 192.168.164.122:6.7,0 192.168.164.55:8.9,0 192.168.164.66:-3.2,0 192.168.164.210:-6.3,0 192.168.164.45:-8.2,0 192.168.164.123:0,0
+./deploy.sh 192.168.164.86 192.168.164.107 192.168.164.122 192.168.164.55 192.168.164.66 192.168.164.210 192.168.164.45 192.168.164.123
+./fetch_csv.sh 192.168.164.86 192.168.164.107 192.168.164.122 192.168.164.55 192.168.164.66 192.168.164.210 192.168.164.45 192.168.164.123
 
-./run.sh /home/trebelge/Documents/Balboa_Network/Examples/main_consensus.py 192.168.76.86:2.1,0 192.168.76.107:4.3,0 192.168.76.122:6.7,0 192.168.76.55:8.9,0 192.168.76.66:-3.2,0 192.168.76.210:-6.3,0 192.168.76.45:-8.2,0 192.168.76.123:0,0
-
-./deploy.sh 192.168.76.86 192.168.76.107 192.168.76.122 192.168.76.55 192.168.76.66 192.168.76.210 192.168.76.45 192.168.76.123
-
-./fetch_csv.sh 192.168.76.86 192.168.76.107 192.168.76.122 192.168.76.55 192.168.76.66 192.168.76.210 192.168.76.45 192.168.76.123
+192.168.164.86 192.168.164.210 192.168.164.122 192.168.164.45 192.168.164.55
+target_position = [1, 0]
+./run.sh /home/trebelge/Documents/Balboa_Network/Examples/main_localize.py 192.168.164.86:-1.0,0.5,2.0616 192.168.164.210:1.0,2.0,2.0 192.168.164.122:3.0,-0.5,2.0616 192.168.164.45:2.0,-2.0,2.2361 192.168.164.55:0,-1,1.4142
+./run.sh /home/trebelge/Documents/Balboa_Network/Examples/main_consensus_v2.py 192.168.164.86:1.0,0 192.168.164.122:2.0,0 192.168.164.55:3.0,0 192.168.164.210:4.0,0 192.168.164.45:6.1,0
+./fetch_csv.sh localize.csv 192.168.164.86 192.168.164.122 192.168.164.55 192.168.164.210 192.168.164.45

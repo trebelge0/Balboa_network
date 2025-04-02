@@ -4,9 +4,9 @@ import glob
 plt.rcParams.update({'font.size': 12})
 
 
-n = 100  # Number of iterations
+n = 10  # Number of iterations
 plot_time = True
-plot_start = True
+plot_start = False
 
 csv_files = glob.glob(os.path.join('../data/', "*.csv"))
 # Check
@@ -61,20 +61,19 @@ for file_path in csv_files:
 
 plt.title(f"Consensus state ({n} iterations)")
 plt.legend()
-# plt.ylim(min(values)-1, max(values)+1)
 plt.grid(True)
 
 if plot_time:
     plt.xlabel("Time [s]")
     plt.ylabel("Value")
     if plot_start:
-        plt.savefig("linear_time_start.png")
+        plt.savefig("shape1_time_start.png")
     else:
-        plt.savefig("linear_time.png")
+        plt.savefig("shape1_time.png")
 
 else:
     plt.xlabel("Iteration")
     plt.ylabel("Value")
-    plt.savefig("linear_it.png")
+    plt.savefig("shape1_it.png")
 
 plt.show()

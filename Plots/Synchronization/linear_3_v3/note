@@ -1,0 +1,1 @@
+tol = 1 / (64 * freq_consensus.state)

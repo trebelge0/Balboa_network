@@ -1,5 +1,16 @@
 #!/bin/bash
 
+
+# Check if csv file is specified
+if [ -z "$1" ]; then
+    echo "Usage: $0 <file.csv <IP1>:<param1>,<param2>,... <IP2>:<param1>,<param2>,..."
+    exit 1
+fi
+
+FILE=$1
+
+shift # Shift args to manage IP's easily
+
 # IPS from args list
 RPIS=("$@")
 
@@ -8,7 +19,7 @@ if [ "$#" -lt 1 ]; then
     echo "Usage: $0 <IP1> <IP2> ... <IPn>"
 
     echo "Use default IPs"
-    RPIS=("raspberrypi" "raspberrypi4L" "raspberrypiZero1" "raspberrypiZero2" "raspberrypiZero3" "raspberrypiZero4")
+    RPIS=("raspberrypiZero1" "raspberrypiZero2" "raspberrypiZero3" "raspberrypiZero4" "raspberrypi" "raspberrypi41" "raspberrypi42" "raspberrypi4L")
 fi
 DEST_DIR="/home/trebelge/OneDrive/Cours UCL/Thesis/Balboa_network/Plots/data"
 
@@ -16,7 +27,7 @@ SSH_KEY="/home/trebelge/.ssh/id_ed25519"
 
 USER="trebelge"
 
-REMOTE_CSV_PATH="/home/trebelge/Documents/Balboa_Network/data/consensus.csv"
+REMOTE_CSV_PATH="/home/trebelge/Documents/Balboa_Network/data/$FILE"
 
 mkdir -p "$DEST_DIR"
 
