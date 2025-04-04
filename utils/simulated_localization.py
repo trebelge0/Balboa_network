@@ -33,6 +33,7 @@ IPS = ["192.168.164.86",
 
 
 agents_position = [[-0.91, 0.3], [2.67, 0.12], [1.63, 2.59]]
+anchor_position = [[0.0, 0.0], [4.06, 2.77], [5.01, 0.0], [-1.32, 1.98]]
 target_position = [2.38, 2.6]
 agents_distance = []  # Actual distances between target and each agent
 
@@ -146,9 +147,16 @@ print(f'x error: {abs(x[0][-1]-target_position[0])*100} cm')
 print(f'y error: {abs(y[0][-1]-target_position[1])*100} cm')
 print(f'Distance from actual target: {np.sqrt((y[0][-1]-target_position[1])**2+(x[0][-1]-target_position[0])**2)*100} cm')
 
-"""for n in range(len(agents_position)):
+plt.scatter(agents_position[0][0], agents_position[0][1], color='blue', label='agent')
+for n in range(1, len(agents_position)):
     plt.scatter(agents_position[n][0], agents_position[n][1], color='blue')
-plt.scatter(target_position[0], target_position[1], color='red')
-plt.title("Agents and target position")
+
+plt.scatter(anchor_position[0][0], anchor_position[0][1], color='green', label='anchor')
+for n in range(1, len(anchor_position)):
+    plt.scatter(anchor_position[n][0], anchor_position[n][1], color='green')
+
+plt.scatter(target_position[0], target_position[1], color='red', label='target')
+plt.title("Agents, anchors and target position")
 plt.grid()
-plt.show()"""
+plt.legend()
+plt.show()

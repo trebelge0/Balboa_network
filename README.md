@@ -1,13 +1,23 @@
-# Balboa swarm communication using RPi's
+# Robotic swarm platform based on the Balboa self-balancing robot
 
 This repository contains a communication platform within a Balboa swarm. 
 A RPi is shielded on each Balboa.
 There are two communication protocole used in it:
 * I²C communication between RPi and Balboa
 * Bluetooth communication within a RPi graph
+
 The agents are equipped with Decawave DWM1001 UWB modules allowing them to measure their position and distances with anchors.
-#
+
+<p align="center">
+  <img src="images/hardware.png" alt="hardware.py" width="400"/>
+</p>
+
 ## System, communication & peripherals
+
+<p align="center">
+  <img src="images/software.png" alt="software" width="1000"/>
+</p>
+
 ### RPi - Balboa Communication: I²C
 The RPi is connected to the 3.3V side of the bus, all other devices are connected to 5V side
 The master is the RPi, it has 4 slaves:
@@ -20,7 +30,7 @@ The Balboa manage encoders and push button reading, leds setting and Decawave DW
 
 The RPi manages the control loop with IMU readings by requesting information from Balboa via I²C.
 
-#### RPi/src/balboa.py
+#### balboa.py
 Class that allows RPi to request/write information from/to Balboa using I²C communication such as:
 * Encoder values (read)
 * Push button (read)
@@ -30,20 +40,24 @@ Class that allows RPi to request/write information from/to Balboa using I²C com
 * Leds (write)
 * Motor speed (write)
 
-#### RPi/src/lsm6.py
+#### lsm6.py
 Class that allows RPi to request information from IMU using I²C communication such as:
 * Acceleration[3]
 * Gyroscope[3]
 
-#### RPi/src/balance.py
+#### balance.py
 Run control algorithm in a separate thread.
 
 ### RPi Network communication: Bluetooth
-#### RPi/src/bluetooth.py
+#### bluetooth.py
 Class that allows RPi's to communicate between them providing:
 * **RPi's MAC address list**
 * **ID** of the current RPi corresponding of its index in the RPi's MAC address list.
 * **Adjacency matrix**: Symmetric square matrix containing edges in the RPi's graph.
+
+<p align="center">
+  <img src="images/bluetooth.png" alt="bluetooth.py" width="400"/>
+</p>
 
 Two steps are performed, after having successfully setup devices beforehand as explained in the next section.
 
@@ -60,8 +74,34 @@ there will be 3 (pseudo) threads running this function.
 * Several processes can use the same bluetooth instance with its connections by using process id.
 * Last message of process i is stored in *bluetooth.buffer[i]* in hexadecimal format. This buffer has length corresponding to *bluetooth.RPI_MACS*.
 
-#### RPi/src/synchronous.py
-#### RPi/src/asynchronous.py
+#### synchronous.py
+Class that enable a synchronous communication within the graph.
+
+It includes a buffer that is composed of decoded values from *bluetooth.buffer* (using a specified structure of types).
+
+The iteration timing is controlled using:
+* Acknowledgement loop: avoid to skip any iteration by sending message before every neighbors read the previous one.
+* Iteration loop: wait for each neighbor current state before computing the next state.
+
+An acknowledgement is then sent after each state reading but a small delay is needed to avoid sending ackowledgement too fast after the message, it would corrupt the communication. If you get timeout error, it is probably due to this delay that need to be increased.
+
+This synchronization process enables it to run iterative algorithm in a distributed way.
+
+<p align="center">
+  <img src="images/sync.png" alt="synchronous.py" width="200"/>
+</p>
+
+#### asynchronous.py
+Class that enable an asynchronous communication within the graph.
+
+It includes a buffer that is composed of decoded values from *bluetooth.buffer* (using a specified structure of types).
+
+Each (delay) seconds, it will send a message and compute the next one based on neighbors messages and its own state.
+It can also execute any function each iteration.
+
+<p align="center">
+  <img src="images/async.png" alt="asynchronous.py" width="200"/>
+</p>
 
 ### Decawave DWM1001 - UWB position/distance sensing
 This module can be set as a tag or an anchor
@@ -71,15 +111,25 @@ This module can be set as a tag or an anchor
 This module is equipped with a SPI/UART/embedded API allowing to communicate with the antenna
 * We use UART with the Balboa TX/RX
 
-#### RPi/src/dwm1001.py
+#### dwm1001.py
 
+This class allow the communication with DWM either by using RPi with the DWM connected on TX/RX from the RPi, or by reading the measures over I²C from the Balboa with the DWM connected on the TX/RX from the Balboa.
+
+<p align="center">
+  <img src="images/dwm.png" alt="dwm.py" width="200"/>
+</p>
+
+It includes a postprocessing function that uses:
+* Moving window average for distance and position
+* Calibrated model of the sensor (see /utils/dwm_calibration.py)
+
+The communication with the DWM uses its UART API in generic mode and uses command 0x0C00 (see DWM API guide)
 
 ### Balboa (Arduino)
 #### BalboaRPiSlave.ino
 It includes the *Decawave DWM1001* reading. 
 It sends data requested by RPi via I²C and write received data from the RPi.
 
-#
 ## Setup & configuration
 ### RPi's
 I use an ssh connection with each of my RPi's by connecting them to hotspot because RPi's cannot connect to eduroam.
@@ -157,7 +207,25 @@ but you could put it to 15 or 20 if you get I²C I/O errors.
 PololuRPiSlave<struct Data,20> slave;
 ```
 
-#
+### DWM
+You should activate serial communication inside:
+```bash
+
+sudo raspi-config
+```
+After that, connect the DWM on native UART port of the RPi and it should appears as /dev/serial0.
+You can open a shell running:
+```bash
+
+sudo minicom -D /dev/serial0
+```
+Type 'enter' twice to switch the DWM UART mode from generic to shell.
+You should get 'dwm>' allowing the laptotp to send commands (type help to see).
+
+On some RPis, data could be sent automatically. It can be solved by removing the line containing serial0 in /boot/firmware/cmdline.txt
+
+The setup of each node should be done using the mobile app, see the DWM documentation.
+
 ## Examples
 For these examples, bluetooth and I²C communication need to be setup before the first use as described in the previous section. The setup is already operational on the RPis, you can access them by setting a hotspot with the following credentials:
 * SSID: Romain
@@ -170,10 +238,14 @@ Before each of these example, you should specify your setup by setting the follo
 * *RPIS_MACS*
 * *ADJACENCY* 
 
-### RPi/Examples/consensus.py
+### Consensus
 This is an example of a **synchronous** communication
 A consensus algorithm will make the RPi graph to converge toward the same state without direct communication.
 This example contains a very basic algorithm that performs the **average between the RPi state and its neighbors states** that have been sent over Bluetooth.
+
+<p align="center">
+  <img src="images/consensus.png" alt="consensus" width="200"/>
+</p>
 
 It uses:
 * Bluetooth
@@ -187,9 +259,13 @@ ID is the index of the current RPi in bluetooth.RPIS_MACS, init_state is the ini
 
 The format of the state used in this example 'f' (float) corresponding to the value that is averaged. 
 
-### RPi/Examples/synchronization.py
+### Synchro
 This is an example of a **multi-process** synchronous communication
 This algorithm uses the same basic algorithm of the previous consensus example, but on 2 values: phase and frequency. The blinking of the leds of the Balboa reflects both states.
+
+<p align="center">
+  <img src="images/synchro.png" alt="synchro" width="200"/>
+</p>
 
 It uses:
 * Bluetooth
@@ -197,34 +273,61 @@ It uses:
 * Balboa
 
 ```
-Usage: python consensus.py <ID> <init_frequency>
+Usage: python synchro.py <ID> <init_frequency>
 ```
 ID is the index of the current RPi in bluetooth.RPIS_MACS, init_frequency is the initial state of the frequency consensus of the current RPi
 
-### RPi/Examples/localize_target.py
+### Target localization
+This is an example of synchronous communication using Decawaves providing real measures.
+The purpose is to localize a target using agents at known position with distance measurements up to the target.
+The measurements are done using Decawave DWM1001 UWB modules.
+
+<p align="center">
+  <img src="images/localize.png" alt="localize" width="250"/>
+</p>
+
+It uses:
+* Balboa
+* DWM
+* Sync
+* Bluetooth
+
+The next state is computed based on position of agent and distance up to the target, using the gradient descent algorithm.
+All agent will converge toward the same target position, despite the fact that the graph is not fully connected.
+
+```
+Usage: python localize.py <ID>
+```
+ID is the index of the current RPi in bluetooth.RPIS_MACS
+
+
 
 ### StandUp
 This is an example of **asynchronous** communication
 This example will make the Balboa stand up like dominos. If a Balboa is down and one of its neighbors is up, it will stand up.
+
+<p align="center">
+  <img src="images/standup.png" alt="standup" width="200"/>
+</p>
+
 It uses:
 * Bluetooth
 * Async 
 * Balboa
 * Balancing
 ```
-Usage: python main_standup.py <ID>
+Usage: python standup.py <ID>
 ```
 ID is the index of the current RPi in bluetooth.RPIS_MACS
 
 The delay of asynchronous communication should be high enough to be safe with the robots.
 
-#
+
 ## Scripts
 
-I created 2 bash scripts that aim to facilitate and accelerate the testing process of the system. 
-Indeed, uploading each file manually using Filezilla with different parameters and executing each of them separately on each RPi could take time.
+I created 4 bash scripts that aim to facilitate and accelerate the testing process and interaction with the swarm. 
+Indeed, uploading each file manually using Filezilla with different parameters and executing each of them separately on each RPi could take time. Same for doing some plots.
 
-These scripts allow the user to do that with only 2 commands.
 Before running these scripts, make sure the execution permission is set or run:
 ```bash
 
@@ -266,4 +369,39 @@ For example, consensus example can be run for 3 RPi's with this single command :
 ```bash
 
 ./run.sh /home/trebelge/Documents/synchro/Bluetooth/main_consensus.py 192.168.1.37:10.0,0 192.168.1.35:3.0,0 192.168.1.17:5.0,0
+```
+
+### fetch_csv.sh
+This script can be used instead of **Filezilla** to get files faster and easier from RPi.
+
+This script allows the user to transfer a file available on each RPi, on a computer on the same LAN network using scp.
+It is especially useful when working with a lot of RPi.
+
+```
+Usage: ./fetch_csv.sh file_name <IP1> <IP2> ... <IPn>
+```
+
+Inside fetch_csv.sh, you should change the following lines corresponding to your own setup:
+* **DEST_DIR** must be set as the PC side directory where files will be transfered.
+* **REMOTE_CSV_PATH** must be as the RPi side directory that will contain file_name.csv
+* **USER** is the RPi user used to connect via ssh
+* **SSH_KEY** can contain the path to an ssh key to avoid being asked to type ssh password
+
+
+### command.sh
+This script can be used to send the same command to all RPis
+It is especially useful when working with a lot of RPi
+
+```
+Usage: ./command.sh 'command' <IP1> <IP2> ... <IPn>
+```
+
+Inside command.sh, you should change the following lines corresponding to your own setup:
+* **USER** is the RPi user used to connect via ssh
+* **SSH_KEY** can contain the path to an ssh key to avoid being asked to type ssh password
+
+For example, in order to shut down every RPi, run:
+```bash
+
+./command.sh "sudo shutdown -h now" 192.168.1.37 192.168.1.35 192.168.1.17
 ```

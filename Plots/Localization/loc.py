@@ -6,7 +6,7 @@ plt.rcParams.update({'font.size': 12})
 
 
 n = 500  # Number of iterations
-plot_time = False
+plot_time = True
 plot_start = True
 actual_x = 2.38
 actual_y = 2.6
@@ -76,8 +76,8 @@ for file_path in csv_files:
         axs[1].plot(y[1:n], color=color[i])
 
 
-axs[1].plot(n*[actual_x], color='red', linestyle='--', label='Actual x position')
-axs[1].plot(n*[actual_y], color='black', linestyle='--', label='Actual y position')
+axs[1].plot(time[1:n], len(time[1:n])*[actual_x], color='red', linestyle='--', label='Actual x position')
+axs[1].plot(time[1:n], len(time[1:n])*[actual_y], color='black', linestyle='--', label='Actual y position')
 axs[0].legend()
 axs[1].legend()
 axs[0].grid(True)
