@@ -12,7 +12,7 @@ The agents are equipped with Decawave DWM1001 UWB modules allowing them to measu
   <img src="images/hardware.png" alt="hardware.py" width="600"/>
 </p>
 
-## System, communication & peripheralswidth
+## System, communication & peripherals
 
 <p align="center">
   <img src="images/software.png" alt="software" width="1400"/>
