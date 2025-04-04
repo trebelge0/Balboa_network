@@ -9,13 +9,13 @@ There are two communication protocole used in it:
 The agents are equipped with Decawave DWM1001 UWB modules allowing them to measure their position and distances with anchors.
 
 <p align="center">
-  <img src="images/hardware.png" alt="hardware.py" width="400"/>
+  <img src="images/hardware.png" alt="hardware.py" width="600"/>
 </p>
 
-## System, communication & peripherals
+## System, communication & peripheralswidth
 
 <p align="center">
-  <img src="images/software.png" alt="software" width="1000"/>
+  <img src="images/software.png" alt="software" width="1400"/>
 </p>
 
 ### RPi - Balboa Communication: I²C
@@ -56,7 +56,7 @@ Class that allows RPi's to communicate between them providing:
 * **Adjacency matrix**: Symmetric square matrix containing edges in the RPi's graph.
 
 <p align="center">
-  <img src="images/bluetooth.png" alt="bluetooth.py" width="400"/>
+  <img src="images/bluetooth.png" alt="bluetooth.py" width="600"/>
 </p>
 
 Two steps are performed, after having successfully setup devices beforehand as explained in the next section.
@@ -88,7 +88,7 @@ An acknowledgement is then sent after each state reading but a small delay is ne
 This synchronization process enables it to run iterative algorithm in a distributed way.
 
 <p align="center">
-  <img src="images/sync.png" alt="synchronous.py" width="200"/>
+  <img src="images/sync.png" alt="synchronous.py" width="300"/>
 </p>
 
 #### asynchronous.py
@@ -100,7 +100,7 @@ Each (delay) seconds, it will send a message and compute the next one based on n
 It can also execute any function each iteration.
 
 <p align="center">
-  <img src="images/async.png" alt="asynchronous.py" width="200"/>
+  <img src="images/async.png" alt="asynchronous.py" width="300"/>
 </p>
 
 ### Decawave DWM1001 - UWB position/distance sensing
@@ -116,7 +116,7 @@ This module is equipped with a SPI/UART/embedded API allowing to communicate wit
 This class allow the communication with DWM either by using RPi with the DWM connected on TX/RX from the RPi, or by reading the measures over I²C from the Balboa with the DWM connected on the TX/RX from the Balboa.
 
 <p align="center">
-  <img src="images/dwm.png" alt="dwm.py" width="200"/>
+  <img src="images/dwm.png" alt="dwm.py" width="300"/>
 </p>
 
 It includes a postprocessing function that uses:
@@ -244,7 +244,7 @@ A consensus algorithm will make the RPi graph to converge toward the same state 
 This example contains a very basic algorithm that performs the **average between the RPi state and its neighbors states** that have been sent over Bluetooth.
 
 <p align="center">
-  <img src="images/consensus.png" alt="consensus" width="200"/>
+  <img src="images/consensus.png" alt="consensus" width="300"/>
 </p>
 
 It uses:
@@ -264,7 +264,7 @@ This is an example of a **multi-process** synchronous communication
 This algorithm uses the same basic algorithm of the previous consensus example, but on 2 values: phase and frequency. The blinking of the leds of the Balboa reflects both states.
 
 <p align="center">
-  <img src="images/synchro.png" alt="synchro" width="300"/>
+  <img src="images/synchro.png" alt="synchro" width="400"/>
 </p>
 
 It uses:
@@ -283,7 +283,7 @@ The purpose is to localize a target using agents at known position with distance
 The measurements are done using Decawave DWM1001 UWB modules.
 
 <p align="center">
-  <img src="images/localize.png" alt="localize" width="300"/>
+  <img src="images/localize.png" alt="localize" width="400"/>
 </p>
 
 It uses:
@@ -307,7 +307,7 @@ This is an example of **asynchronous** communication
 This example will make the Balboa stand up like dominos. If a Balboa is down and one of its neighbors is up, it will stand up.
 
 <p align="center">
-  <img src="images/standup.png" alt="standup" width="300"/>
+  <img src="images/standup.png" alt="standup" width="400"/>
 </p>
 
 It uses:
