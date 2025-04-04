@@ -180,6 +180,13 @@ trust <MAC_RPi_1>
 
 Devices are now paired and will be able to connect using python in the future.
 
+Some RPi Zero 2 are loaded with a bugged bluetooth firmware, they are unable to connect more than a few seconds and commands using hciconfig or btmgmt provides a timeout error.
+To handle this, I found that you can force the detection of the proper RPI zero 2 using:
+```bash
+
+sudo cp /lib/firmware/brcm/BCM43430A1.hcd /lib/firmware/brcm/BCM43430A1.raspberrypi,model-zero-2-w.hcd
+```
+
 #### I²C
 RPi is shielded on Balboa using pin headers. Balboa includes a level shifter connected between SDA/SCL from Arduino and RPi, creating two sides on the bus.
 
