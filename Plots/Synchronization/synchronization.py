@@ -3,10 +3,10 @@ import os
 import glob
 plt.rcParams.update({'font.size': 12})
 
-n = 30  # Number of iterations
+n = 300  # Number of iterations
 plot_time = True
-plot_start = False
-name = "linear_3_v3"
+plot_start = True
+name = "loop_3"
 
 csv_freq = glob.glob(os.path.join(f'{name}/frequency', "*.csv"))
 csv_phase = glob.glob(os.path.join(f'{name}/phase', "*.csv"))

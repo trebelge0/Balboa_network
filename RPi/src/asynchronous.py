@@ -1,3 +1,9 @@
+"""
+Romain Englebert - Master's Thesis
+© 2025 Romain Englebert.
+"""
+
+
 import time
 import struct
 
@@ -47,7 +53,7 @@ class Async:
 
         self.PROCESS = process_id
         self.DELAY = delay
-        self.TYPE = f'{msg_type}'
+        self.TYPE = f'<{msg_type}'
         self.VERBOSE = verbose
 
 
@@ -65,7 +71,7 @@ class Async:
             if self.bluetooth.buffer[self.PROCESS][i] != -1:
                 temp = list(struct.unpack(self.TYPE, self.bluetooth.buffer[self.PROCESS][i]))
                 self.buffer[i][:] = temp
-        self.buffer[self.bluetooth.ID][1:-1] = self.message
+        self.buffer[self.bluetooth.ID] = self.message
 
 
     def run(self):
@@ -86,7 +92,7 @@ class Async:
         while True:
 
             # Messages has the structure : [PROCESS_ID, iteration, state, ACK] ([short, short, self.TYPE, short])
-            self.bluetooth.send_message(f'<h{self.TYPE}', self.PROCESS, *self.message)  # Send state to neighbors
+            self.bluetooth.send_message(f'<h{self.TYPE[1:]}', self.PROCESS, *self.message)  # Send state to neighbors
 
             # Wait to receive initial neighbor's state
             while any([self.bluetooth.buffer[self.PROCESS][n] == -1 for n in self.bluetooth.neighbors_index]):
@@ -99,7 +105,7 @@ class Async:
 
             # For data saving
             self.data.append([time.time(), *self.message])
-            if self.more_data != -1:
+            if self.more_data[0] != -1:
                 for j in range(len(self.more_data)):
                     self.data[-1].append(self.more_data[j])
 

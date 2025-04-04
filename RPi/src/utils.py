@@ -1,3 +1,9 @@
+"""
+Romain Englebert - Master's Thesis
+© 2025 Romain Englebert.
+"""
+
+
 import csv
 import sys
 
@@ -24,32 +30,33 @@ ADJACENCY = [[1, 1, 0, 0, 0, 0, 0, 0],
              [0, 0, 0, 0, 0, 0, 1 ,1]]
 
 
+# Z1 - 41 - 42 - Z4
 RPIS_MACS = ["2C:CF:67:85:E8:89",
-             "2C:CF:67:AE:E0:E4",
-             "2C:CF:67:85:B4:E0",
-             "2C:CF:67:AE:E3:3B",
+             "2C:CF:67:85:B3:D2",
              "2C:CF:67:AE:4B:DE"]
 
-ADJACENCY = [[1, 1, 0, 0, 1],
-             [1, 1, 1, 0, 0],
-             [0, 1, 1, 1, 0],
-             [0, 0, 1, 1, 1],
-             [1, 0, 0, 1, 1]]
+ADJACENCY = [[1, 1, 0],
+             [1, 1, 1],
+             [0, 1, 1]]
 
 
 def save_data(data, file_path):
     """
     Save data into file_path on the RPi
     """
+    if len(data) != len(file_path):
+        print("file_path must have the same length as data")
+        return
 
-    with open(file_path, mode='w', newline='', encoding='utf-8') as file:
-        writer = csv.writer(file)
-        for value in data:
-            writer.writerow(value)
-    print(f"Data saved in {file_path}")
+    for i in range(len(data)):
+        with open(file_path[i], mode='w', newline='', encoding='utf-8') as file:
+            writer = csv.writer(file)
+            for value in data[i]:
+                writer.writerow(value)
+        print(f"Data saved in {file_path[i]}")
 
 
-def signal_handler(data, file_path):
+def signal_handler(signum, frame, data, file_path):
 
     print("Interruption detected, data saving...")
     save_data(data, file_path)
@@ -83,3 +90,7 @@ def check_args(n):
         sys.exit(1)
 
     return args
+
+
+def hex_str(data):
+    return " ".join(f"{b:02X}" for b in data)

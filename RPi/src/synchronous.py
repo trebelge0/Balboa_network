@@ -1,3 +1,9 @@
+"""
+Romain Englebert - Master's Thesis
+© 2025 Romain Englebert.
+"""
+
+import random
 import time
 import struct
 
@@ -48,7 +54,7 @@ class Sync:
 
         self.PROCESS = process_id
         self.DELAY = delay
-        self.TYPE = f'h{msg_type}h'  # First and last 'h' are respectively used for iteration and acknowledgement synchronization loop
+        self.TYPE = f'<h{msg_type}h'  # First and last 'h' are respectively used for iteration and acknowledgement synchronization loop
         self.VERBOSE = verbose
 
 
@@ -111,37 +117,41 @@ class Sync:
             # First synchronization loop
             # While not ack i-1
             while self.get_ACK(i):
-                time.sleep(1e-2)
-                continue
+                time.sleep(1e-1)
+                if self.VERBOSE:
+                    print("Wait for ACK")
 
             # Messages has the structure : [PROCESS_ID, iteration, state, ACK] ([short, short, self.TYPE, short])
-            self.bluetooth.send_message(f'<h{self.TYPE}', self.PROCESS, i, *self.state, i)  # Send state to neighbors
+            self.bluetooth.send_message(f'<h{self.TYPE[1:]}', self.PROCESS, i, *self.state, i)  # Send state to neighbors
 
             # Wait to receive initial neighbor's state
             while any([self.bluetooth.buffer[self.PROCESS][n] == -1 for n in self.bluetooth.neighbors_index]):
-                time.sleep(1e-2)
-                continue
+                time.sleep(1e-1)
+                if self.VERBOSE:
+                    print("Wait for init message")
 
             self.get_buffer()  # Update neighbor's state knowledge
 
             # Second synchronization loop
             # Wait for the message of the current iteration from all neighbors
             while any([self.buffer[n][0] != i for n in self.bluetooth.neighbors_index]):
-                time.sleep(1e-2)
+                time.sleep(1e-1)
+                if self.VERBOSE:
+                    print("Wait for all neighbors states")
                 self.get_buffer()  # Update neighbor's state knowledge
 
-            # If the RPi lost connection after few iterations, increase this delay
+            # If the RPi lost connection with timeoutafter few iterations, increase this delay
             time.sleep(self.DELAY)
 
             # Send acknowledgement
-            self.bluetooth.send_message(f'<h{self.TYPE}', self.PROCESS, i, *self.state, i+1)
+            self.bluetooth.send_message(f'<h{self.TYPE[1:]}', self.PROCESS, i, *self.state, i+1)
 
             # Compute the current state
-            self.state = self.compute_state(self.buffer, self.state)
+            self.state = self.compute_state(self.buffer)
 
             # For data saving
             self.data.append([time.time(), *self.state])
-            if self.more_data != -1:
+            if self.more_data[0] != -1:
                 for j in range(len(self.more_data)):
                     self.data[-1].append(self.more_data[j])
 

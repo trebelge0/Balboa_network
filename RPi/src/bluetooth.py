@@ -1,7 +1,14 @@
+"""
+Romain Englebert - Master's Thesis
+© 2025 Romain Englebert.
+"""
+
+
 import socket
 import threading
 import time
 import struct
+from utils import hex_str
 
 
 class Bluetooth:
@@ -76,26 +83,38 @@ class Bluetooth:
         print(f"Connected to {addr}")
         while True:
             try:
-                data = conn.recv(1024)
-                if data:
-                    if self.VERBOSE:
-                        print(f"\nMessage from {addr}: {data}")
+                data = conn.recv(128)
+                if not data:  # Client a fermé la connexion proprement
+                    print(f"Client {addr} closed the connection.")
+                    break
 
-                    for i in range(len(self.RPIS_MACS)):
-                        if addr == self.RPIS_MACS[i]:
-                            try:
+                if self.VERBOSE:
+                    print(f"\nMessage from {addr}: {hex_str(data)}")
+
+                for i in range(len(self.RPIS_MACS)):
+                    if addr == self.RPIS_MACS[i]:
+                        try:
+                            if len(data) >= 2:  # Vérifie que la donnée contient au moins 2 octets
                                 p = struct.unpack('<h', data[:2])[0]
                                 if 0 <= p < self.PROCESSES:
                                     self.buffer[p][i] = data[2:]
-                            except:  # If no process number is provided
-                                self.buffer[0][i] = data
-                else:
-                    break
-            except:
+                            else:
+                                raise ValueError("Received data too short")
+                        except Exception as e:
+                            print(f"Data processing error from {addr}: {e}")
+                            self.buffer[0][i] = data
+            except (ConnectionResetError, BrokenPipeError):
+                print(f"Connection lost with {addr}")
                 break
+            except Exception as e:
+                print(f"Unexpected error with {addr}: {e}")
+                break
+
         print(f"Disconnected from {addr}")
         conn.close()
-        del self.connections[addr]
+
+        if addr in self.connections:
+            del self.connections[addr]
 
 
     def start_server(self):

@@ -9,5 +9,15 @@
 192.168.164.86 192.168.164.210 192.168.164.122 192.168.164.45 192.168.164.55
 target_position = [1, 0]
 ./run.sh /home/trebelge/Documents/Balboa_Network/Examples/main_localize.py 192.168.164.86:-1.0,0.5,2.0616 192.168.164.210:1.0,2.0,2.0 192.168.164.122:3.0,-0.5,2.0616 192.168.164.45:2.0,-2.0,2.2361 192.168.164.55:0,-1,1.4142
-./run.sh /home/trebelge/Documents/Balboa_Network/Examples/main_consensus_v2.py 192.168.164.86:1.0,0 192.168.164.122:2.0,0 192.168.164.55:3.0,0 192.168.164.210:4.0,0 192.168.164.45:6.1,0
+./run.sh /home/trebelge/Documents/Balboa_Network/Examples/main_consensus.py 192.168.164.86:1.0,0 192.168.164.210:2.0,0 192.168.164.122:3.0,0 192.168.164.45:4.0,0 192.168.164.55:6.1,0
 ./fetch_csv.sh localize.csv 192.168.164.86 192.168.164.122 192.168.164.55 192.168.164.210 192.168.164.45
+
+192.168.164.86 192.168.164.210 192.168.164.45 192.168.164.55
+./run.sh /home/trebelge/Documents/Balboa_Network/Examples/main_consensus.py 192.168.164.86:1.0,0 192.168.164.210:2.0,0 192.168.164.45:4.0,0 192.168.164.55:6.1,0
+./run.sh /home/trebelge/Documents/Balboa_Network/Examples/main_synchro.py 192.168.164.86:1.0 192.168.164.45:4.0 192.168.164.55:6.1
+./run.sh /home/trebelge/Documents/Balboa_Network/Examples/main_standup.py 192.168.164.86 192.168.164.210 192.168.164.45 192.168.164.55
+./fetch_csv.sh localize.csv 192.168.164.86 192.168.164.55 192.168.164.210 192.168.164.45
+
+
+192.168.164.86 192.168.164.107 192.168.164.55
+./run.sh /home/trebelge/Documents/Balboa_Network/Examples/main_localize.py 192.168.164.86 192.168.164.107 192.168.164.55

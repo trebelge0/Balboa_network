@@ -6,6 +6,7 @@ Romain Englebert - Master's Thesis
 
 import struct
 import numpy as np
+from utils import hex_str
 
 
 def error(err_code):
@@ -23,13 +24,9 @@ def error(err_code):
         print("operation not permitted")
 
 
-def hex_str(data):
-    return " ".join(f"{b:02X}" for b in data)
-
-
 class DWM:
 
-    def __init__(self, balboa, window_size=5):
+    def __init__(self, balboa, window_size=5, verbose=False, target_addr="20 8D"):
 
         # Use self.dwm_loc_get() if DWM1001 is connected to the RPi
         self.rocky = balboa
@@ -38,9 +35,10 @@ class DWM:
         self.positions = []
         self.distance = 0
         self.position = 0
-        self.read()
 
         self.WINDOW = window_size  # Number of measures kept for postprocessing
+        self.VERBOSE = verbose
+        self.TARGET_ADDR = target_addr
 
 
     def read(self):
@@ -53,9 +51,6 @@ class DWM:
         # Fill memory buffer for postprocessing
         self.distances.append(data[0])
         self.positions.append(data[1:3])
-        if len(self.distances) >= self.WINDOW:
-            del self.distances[0]
-            del self.positions[0]
 
         # Update current distance and position
         self.distance = data[0]
@@ -69,7 +64,11 @@ class DWM:
         To get a model of the sensor (a and b), use ../utils/dwm_calibration.py
         """
 
-        values = np.array(self.distance)
+        if len(self.distances) >= self.WINDOW:
+            del self.distances[0]
+            del self.positions[0]
+
+        values = np.array(self.distances)
         Q1 = np.percentile(values, 20)
         Q3 = np.percentile(values, 80)
         IQR = Q3 - Q1
@@ -77,11 +76,12 @@ class DWM:
         upper_bound = Q3 + 1.5 * IQR
         values = values[(values >= lower_bound) & (values <= upper_bound)]
 
-        d = np.mean(values)
+        d = np.mean(values) / 1000
         a = 0.94922
         b = -0.103395
 
         self.distance = a * d + b
+        self.position = [sum(values) / len(values) for values in zip(*self.positions)]
 
 
     def dwm_loc_get(self, serial_port):
@@ -96,17 +96,19 @@ class DWM:
 
         TLV_TYPE_RET_VAL = 0x40
         TLV_TYPE_POS_XYZ = 0x41
-        TLV_TYPE_RNG_AN_DIST = 0x48
         TLV_TYPE_RNG_AN_POS_DIST = 0x49
 
         POS_LEN = 13
         DIST_LEN = 7
 
+        an_number = 0
+
         tx_data = bytearray([DWM1001_TLV_TYPE_CMD_LOC_GET, 0x00])
         serial_port.write(tx_data)
 
-        rx_data = serial_port.read(100)
-        print(hex_str(rx_data))
+        rx_data = serial_port.read(150)
+        if self.VERBOSE:
+            print(hex_str(rx_data))
 
         result = {}
 
@@ -131,29 +133,42 @@ class DWM:
                 }
             data_cnt += pos_len
 
-        if rx_data[data_cnt] in [TLV_TYPE_RNG_AN_POS_DIST, TLV_TYPE_RNG_AN_DIST]:
+        if rx_data[data_cnt] == TLV_TYPE_RNG_AN_POS_DIST:
             an_pos_dist_len = rx_data[data_cnt + 1]
             an_number = rx_data[data_cnt + 2]
             data_cnt += 3
 
+
             for i in range(an_number):
 
-                if an_pos_dist_len // an_number >= 1 + DIST_LEN + POS_LEN:
-                    result[f'an{i}'] = {
-                        'uwb_addr': hex_str(rx_data[data_cnt:data_cnt + 2]),
-                        'd': struct.unpack('<i', rx_data[data_cnt + 2:data_cnt + 6])[0],
-                        'qf': rx_data[data_cnt + 6]
-                    }
-                    data_cnt += DIST_LEN
+                result[f'an{i}'] = {
+                    'uwb_addr': hex_str(rx_data[data_cnt:data_cnt + 2]),
+                    'd': struct.unpack('<i', rx_data[data_cnt + 2:data_cnt + 6])[0],
+                    'qf': rx_data[data_cnt + 6]
+                }
+                data_cnt += DIST_LEN
 
-                    result[f'an{i}_pos'] = {
-                        'x': struct.unpack('<i', rx_data[data_cnt:data_cnt + 4])[0],
-                        'y': struct.unpack('<i', rx_data[data_cnt + 4:data_cnt + 8])[0],
-                        'z': struct.unpack('<i', rx_data[data_cnt + 8:data_cnt + 12])[0],
-                        'qf': rx_data[data_cnt + 12]
-                    }
+                result[f'an{i}_pos'] = {
+                    'x': struct.unpack('<i', rx_data[data_cnt:data_cnt + 4])[0],
+                    'y': struct.unpack('<i', rx_data[data_cnt + 4:data_cnt + 8])[0],
+                    'z': struct.unpack('<i', rx_data[data_cnt + 8:data_cnt + 12])[0],
+                    'qf': rx_data[data_cnt + 12]
+                }
 
                 data_cnt += POS_LEN
 
-        self.positions.append(result['an0']['d'])
-        self.distances.append([result['tag_pos']['x'], result['tag_pos']['y']])
+        if self.VERBOSE:
+            print(result)
+
+        try:
+            for i in range(an_number):
+                if result[f'an{i}']['uwb_addr'] == self.TARGET_ADDR:
+                    self.distances.append(result[f'an{i}']['d'])
+
+            self.positions.append([result['tag_pos']['x'], result['tag_pos']['y']])
+
+            self.distance = self.distances[-1] / 1000
+            self.position = list(np.array(self.positions[-1]) / 1000)
+
+        except:
+            print("DWM data missing")

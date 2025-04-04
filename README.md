@@ -1,43 +1,45 @@
 # Balboa swarm communication using RPi's
 
-This repository contains a communication platform between a Balboa swarm. 
+This repository contains a communication platform within a Balboa swarm. 
 A RPi is shielded on each Balboa.
 There are two communication protocole used in it:
-I²C communication between RPi and Balboa
-and a RFCOMM Bluetooth communication between each RPis
+* I²C communication between RPi and Balboa
+* Bluetooth communication within a RPi graph
+The agents are equipped with Decawave DWM1001 UWB modules allowing them to measure their position and distances with anchors.
 #
 ## System, communication & peripherals
 ### RPi - Balboa Communication: I²C
+The RPi is connected to the 3.3V side of the bus, all other devices are connected to 5V side
 The master is the RPi, it has 4 slaves:
-* Balboa
-* IMU
+* Balboa 
+* IMU 
+* OLED screen 
 * Magnetometer (not used)
-* OLED screen
 
-The Balboa manage encoders and push button reading as well as leds setting.
-IMU measure acceleration and angular speed for the 3-axis.
+The Balboa manage encoders and push button reading, leds setting and Decawave DWM1001 readings.
 
-The RPi manages the control loop by requesting information from Balboa and IMU via I²C.
+The RPi manages the control loop with IMU readings by requesting information from Balboa via I²C.
 
-#### balboa.py
+#### RPi/src/balboa.py
 Class that allows RPi to request/write information from/to Balboa using I²C communication such as:
 * Encoder values (read)
 * Push button (read)
-* Battery level (read)
+* Battery voltage level (read)
+* Position and distance measurement (read)
 * Buzzer (write)
 * Leds (write)
 * Motor speed (write)
 
-#### lsm6.py
+#### RPi/src/lsm6.py
 Class that allows RPi to request information from IMU using I²C communication such as:
 * Acceleration[3]
 * Gyroscope[3]
 
-#### balance.py
+#### RPi/src/balance.py
 Run control algorithm in a separate thread.
 
 ### RPi Network communication: Bluetooth
-#### bluetooth.py
+#### RPi/src/bluetooth.py
 Class that allows RPi's to communicate between them providing:
 * **RPi's MAC address list**
 * **ID** of the current RPi corresponding of its index in the RPi's MAC address list.
@@ -54,50 +56,48 @@ Two steps are performed, after having successfully setup devices beforehand as e
 * **Bidirectionnal**
 * *send_message(self, type, \*args)* send args converted in hexadecimal based on the specified type following the *struct* library.
 * *handle_client(self, conn, addr)* is run by a separate thread for each connection. For example if a RPi is connected to 3 other RPi,
-there will be 3 threads running this function.
-* Last message is stored in *bluetooth.buffer* in hexadecimal format. This buffer has length corresponding to *bluetooth.RPI_MACS*.
+there will be 3 (pseudo) threads running this function.
+* Several processes can use the same bluetooth instance with its connections by using process id.
+* Last message of process i is stored in *bluetooth.buffer[i]* in hexadecimal format. This buffer has length corresponding to *bluetooth.RPI_MACS*.
+
+#### RPi/src/synchronous.py
+#### RPi/src/asynchronous.py
+
+### Decawave DWM1001 - UWB position/distance sensing
+This module can be set as a tag or an anchor
+* Attached to agents: tags (position to be measured)
+* Balises: anchors (known position to perform triangulation)
+* Target: anchor (unknown position, tags can measure their distance between them and the target)
+This module is equipped with a SPI/UART/embedded API allowing to communicate with the antenna
+* We use UART with the Balboa TX/RX
+
+#### RPi/src/dwm1001.py
 
 
 ### Balboa (Arduino)
 #### BalboaRPiSlave.ino
-It is constantly reading encoders values and push buttons states. 
+It includes the *Decawave DWM1001* reading. 
 It sends data requested by RPi via I²C and write received data from the RPi.
 
 #
 ## Setup & configuration
 ### RPi's
-I use an ssh connection with each of my RPi's using a mobile hotspot because RPi's cannot connect to eduroam.
+I use an ssh connection with each of my RPi's by connecting them to hotspot because RPi's cannot connect to eduroam.
+Currently, the setup is complete on the RPis. You can connect to them by setting a hotspot with following credentials:
+* SSID: Romain
+* password: yiwi9000
+If you need to do the setup again, follow the instructions hereafter.
 
-### Bluetooth
-Before the first communication, you should run:
+#### Bluetooth
+Before everything, you should:
+* Activate VNC within 
 ```bash
 
-sudo sdptool add SP
-sudo sdptool browse local
+sudo raspi-config
 ```
-The last command is supposed to show Serial Port to enable RFCOMM communication.
-
-It may give you an **error**, then run:
-```bash
-
-sudo nano /etc/systemd/system/dbus-org.bluez.service
-```
-And add --compat to the following line:
-```bash
-
-ExecStart=/usr/lib/bluetooth/bluetoothd --compat
-```
-Then run:
-```bash
-
-sudo systemctl daemon-reload
-sudo systemctl restart bluetooth
-```
-
-Try again to enable RFCOMM Serial Port with sdptool.
 
 Before the first connection, devices that need to connect are needed to be paired first. 
-You should use VNC or an HDMI monitor on both devices in order to accept the pair request with corresponding PIN.
+You should use VNC (or an HDMI monitor) on each devices in order to accept the pair request with its corresponding PIN.
 
 In parrallel, on both RPi's, run:
 ```bash
@@ -110,27 +110,30 @@ On the first RPi, run
 discoverable on
 pairable on
 ```
-On the other RPi, run
+On the others RPis, run
 ```bash
 
 scan on
-pair <MAC_RPi_1>
 ```
-Accept the pair request on the screen using VNC or a monitor. 
-Devices are now paired and will be able to connect using python at each future boot.
-
-If you got permission errors, try running:
+Once the RPi appears in the list:
 ```bash
 
-sudo usermod -aG bluetooth $USER
-newgrp bluetooth
+pair <MAC_RPi_1>
 ```
 
-### I²C
-RPi's are shielded on Balboa using pin headers. Balboa includes a level shifter connected between SDA/SCL from Arduino and RPi.
-IMU and magnetometer are connected on the bus via the Balboa as well.
+Accept the pair request on the screen using VNC or a monitor. 
+Then trust the deivces on both sides:
+```bash
 
-I²C can be activated using :
+trust <MAC_RPi_1>
+```
+
+Devices are now paired and will be able to connect using python in the future.
+
+#### I²C
+RPi is shielded on Balboa using pin headers. Balboa includes a level shifter connected between SDA/SCL from Arduino and RPi, creating two sides on the bus.
+
+I²C can be activated within :
 ```bash
 
 sudo raspi-config
@@ -156,41 +159,64 @@ PololuRPiSlave<struct Data,20> slave;
 
 #
 ## Examples
-For these examples, bluetooth and I²C communication need to be setup before the first use as described in the previous section.
+For these examples, bluetooth and I²C communication need to be setup before the first use as described in the previous section. The setup is already operational on the RPis, you can access them by setting a hotspot with the following credentials:
+* SSID: Romain
+* password: yiwi9000
 
-Each of these example has a function that translate *bluetooth.buffer* from hexadecimal to specified types. 
-The result is stored in another buffer owned by the related class.
+Each of these example use one Bluetooth class instance with one or several class instances of Async or Sync.
+To interact with the Balboa they can include an instance of the class Balboa, to make them balancing the Balboa instance should be given to a Balancing class instance.
 
-### Consensus
-A consensus algorithm will make the RPi's to converge toward the same value without direct communication.
+Before each of these example, you should specify your setup by setting the following variables in /RPi/utils.py:
+* *RPIS_MACS*
+* *ADJACENCY* 
 
-This example contains an algorithm that performs the average between each RPi's value and its neighbors values that have been sent via Bluetooth.
+### RPi/Examples/consensus.py
+This is an example of a **synchronous** communication
+A consensus algorithm will make the RPi graph to converge toward the same state without direct communication.
+This example contains a very basic algorithm that performs the **average between the RPi state and its neighbors states** that have been sent over Bluetooth.
+
+It uses:
+* Bluetooth
+* Sync
+* May include Balboa to use leds
+
 ```
-Usage: python script.py <ID> <init_state> <i2c>
+Usage: python consensus.py <ID> <init_state> <i2c>
 ```
-ID is the index of the current RPi in bluetooth.RPIS_MACS, init_state is the initial value of the current RPi and i2c is
-set to 0 when the RPi is not shielded on the Balboa, 1 otherwise to use leds to observe convergence.
+ID is the index of the current RPi in bluetooth.RPIS_MACS, init_state is the initial state of the current RPi and i2c is set to 0 when the RPi is not shielded on the Balboa, 1 otherwise to use leds to observe convergence.
 
-Inside main_consensus.py, you should change the following lines corresponding to your own setup:
-* **RPIS_MACS** need to be set according to you own setup in main_consensus.py
-* **ADJACENCY** need to be set according to the connections you want to set.
+The format of the state used in this example 'f' (float) corresponding to the value that is averaged. 
 
-The format of the buffer used in this example is [[iteration_1, value_1], ..., [iteration_n, value_n]]. 
-It is created based on *bluetooth.buffer* thanks to the function *consensus.get_consensus()* that translate hexadecimal into wanted format.
+### RPi/Examples/synchronization.py
+This is an example of a **multi-process** synchronous communication
+This algorithm uses the same basic algorithm of the previous consensus example, but on 2 values: phase and frequency. The blinking of the leds of the Balboa reflects both states.
 
-If RPi's are shielded on the Balboa's and i2c parameter is not set to 0, leds from the Balboa should blink at the frequency corresponding to the current value of the RPi's.
+It uses:
+* Bluetooth
+* 2x Sync (phase and frequency)
+* Balboa
+
+```
+Usage: python consensus.py <ID> <init_frequency>
+```
+ID is the index of the current RPi in bluetooth.RPIS_MACS, init_frequency is the initial state of the frequency consensus of the current RPi
+
+### RPi/Examples/localize_target.py
 
 ### StandUp
+This is an example of **asynchronous** communication
 This example will make the Balboa stand up like dominos. If a Balboa is down and one of its neighbors is up, it will stand up.
+It uses:
+* Bluetooth
+* Async 
+* Balboa
+* Balancing
 ```
 Usage: python main_standup.py <ID>
 ```
 ID is the index of the current RPi in bluetooth.RPIS_MACS
 
-Inside main_standup.py, you should change the following lines corresponding to your own setup:
-* **RPIS_MACS** need to be set according to you own setup in main_consensus.py
-* **ADJACENCY** need to be set according to the connections you want to set.
-
+The delay of asynchronous communication should be high enough to be safe with the robots.
 
 #
 ## Scripts

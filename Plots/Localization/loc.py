@@ -5,9 +5,11 @@ import numpy as np
 plt.rcParams.update({'font.size': 12})
 
 
-n = 200  # Number of iterations
-plot_time = True
+n = 500  # Number of iterations
+plot_time = False
 plot_start = True
+actual_x = 2.38
+actual_y = 2.6
 
 csv_files = glob.glob(os.path.join('../data/', "*.csv"))
 # Check
@@ -38,8 +40,11 @@ for file_path in csv_files:
 
 fig, axs = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
 
+color=['purple', 'orange', 'green']
+
 for file_path in csv_files:
-    file_name = "RPi " + os.path.basename(file_path).split(".")[0]
+    i = int(os.path.basename(file_path).split(".")[0])
+    file_name = f"RPi {i}"
 
     time = []
     cost = []
@@ -59,41 +64,43 @@ for file_path in csv_files:
                     continue
 
     if plot_time:
-        axs[0].plot(time[1:n], cost[1:n], label=file_name)
-        axs[1].plot(time[1:n], x[1:n], label=file_name)
-        axs[1].plot(time[1:n], y[1:n], label=file_name)
+        axs[0].plot(time[1:n], cost[1:n], label=file_name, color=color[i])
+        axs[1].plot(time[1:n], x[1:n], label=file_name, color=color[i])
+        axs[1].plot(time[1:n], y[1:n], color=color[i])
         if not plot_start:
             axs[0].set_xlim((last_start_time - start_time-1, time[n]))
             axs[1].set_xlim((last_start_time - start_time-1, time[n]))
     else:
-        axs[0].plot(cost[1:n], label=file_name)
-        axs[1].plot(x[1:n], label=file_name)
-        axs[1].plot(y[1:n], label=file_name)
+        axs[0].plot(cost[1:n], label=file_name, color=color[i])
+        axs[1].plot(x[1:n], label=file_name, color=color[i])
+        axs[1].plot(y[1:n], color=color[i])
 
 
-axs[0].set_title(f"Localization state ({n} iterations)")
+axs[1].plot(n*[actual_x], color='red', linestyle='--', label='Actual x position')
+axs[1].plot(n*[actual_y], color='black', linestyle='--', label='Actual y position')
 axs[0].legend()
+axs[1].legend()
 axs[0].grid(True)
 axs[1].grid(True)
+axs[0].set_ylabel("Cost function")
+axs[1].set_ylabel("Target position [m]")
+axs[0].set_yscale('log')
+
 
 if plot_time:
     axs[1].set_xlabel("Time [s]")
-    axs[0].set_ylabel("Cost")
-    axs[1].set_ylabel("Position")
-    axs[0].set_yscale('log')
-    plt.tight_layout()
+    #plt.tight_layout()
     if plot_start:
-        plt.savefig("loop5_time_start.png")
+        plt.savefig("linear3_time_start.png")
     else:
-        plt.savefig("loop5_time.png")
-
+        plt.savefig("linear3_time.png")
 else:
     axs[1].set_xlabel("Iteration")
-    axs[0].set_ylabel("Cost")
-    axs[1].set_ylabel("Position")
-    axs[0].set_yscale('log')
-    plt.tight_layout()
-    plt.savefig("loop5_it.png")
+    #plt.tight_layout()
+    plt.savefig("linear3_it.png")
 
-print(y)
 plt.show()
+
+print(f'x error: {abs(x[-1]-actual_x)*100} cm')
+print(f'y error: {abs(y[-1]-actual_y)*100} cm')
+print(f'Distance from actual target: {np.sqrt((y[-1]-actual_y)**2+(x[-1]-actual_x)**2)*100} cm')

@@ -1,0 +1,4 @@
+tol = 1 / (64 * freq_consensus.state)
+freq = 1, 4, 6
+delay ack = 5e-1
+delay = 0
