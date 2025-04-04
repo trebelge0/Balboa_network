@@ -264,7 +264,7 @@ This is an example of a **multi-process** synchronous communication
 This algorithm uses the same basic algorithm of the previous consensus example, but on 2 values: phase and frequency. The blinking of the leds of the Balboa reflects both states.
 
 <p align="center">
-  <img src="images/synchro.png" alt="synchro" width="200"/>
+  <img src="images/synchro.png" alt="synchro" width="300"/>
 </p>
 
 It uses:
@@ -283,7 +283,7 @@ The purpose is to localize a target using agents at known position with distance
 The measurements are done using Decawave DWM1001 UWB modules.
 
 <p align="center">
-  <img src="images/localize.png" alt="localize" width="250"/>
+  <img src="images/localize.png" alt="localize" width="300"/>
 </p>
 
 It uses:
@@ -307,7 +307,7 @@ This is an example of **asynchronous** communication
 This example will make the Balboa stand up like dominos. If a Balboa is down and one of its neighbors is up, it will stand up.
 
 <p align="center">
-  <img src="images/standup.png" alt="standup" width="200"/>
+  <img src="images/standup.png" alt="standup" width="300"/>
 </p>
 
 It uses:
