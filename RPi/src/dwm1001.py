@@ -26,7 +26,7 @@ def error(err_code):
 
 class DWM:
 
-    def __init__(self, balboa, window_size=5, verbose=False, target_addr="20 8D"):
+    def __init__(self, balboa, window_size=5, target_addr="20 8D", verbose=False):
 
         # Use self.dwm_loc_get() if DWM1001 is connected to the RPi
         self.rocky = balboa
@@ -47,7 +47,7 @@ class DWM:
         """
 
         data = self.rocky.read_uwb()  # Read values from Balboa via i2c
-
+        print(data)
         # Fill memory buffer for postprocessing
         self.distances.append(data[0])
         self.positions.append(data[1:3])
@@ -64,7 +64,7 @@ class DWM:
         To get a model of the sensor (a and b), use ../utils/dwm_calibration.py
         """
 
-        if len(self.distances) >= self.WINDOW:
+        if len(self.distances) > self.WINDOW:
             del self.distances[0]
             del self.positions[0]
 

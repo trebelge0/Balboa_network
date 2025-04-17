@@ -1,22 +1,23 @@
 """
-Romain Englebert - Master's Thesis
-© 2025 Romain Englebert.
+* Master's Thesis *
+Implementation of a robotic swarm platform
+based on the Balboa self-balancing robot
+© 2025 Romain Englebert
 """
 
-import random
 import time
 import struct
 
 
 class Sync:
 
-    def __init__(self, bt, init_state, compute_state, msg_type, delay=0, process_id=0, verbose=True):
+    def __init__(self, bt, init_state, next_state, state_struct, delay=0, process_id=0, verbose=True):
         """
         Args:
             bt:                     instance of Bluetooth used for this process.
             init_state:             list of initial value of the RPi state (size:len(bluetooth.buffer)-2)
-            compute_state(buffer):  returns the next state based on buffer (self.buffer)
-            msg_type:               str corresponding to the state type base on struct types (size:len(init_state))
+            next_state(buffer):  returns the next state based on buffer (self.buffer)
+            state_struct:               str corresponding to the state type base on struct types (size:len(init_state))
             delay:                  optional delay between each message
             process_id:             optional int corresponding to the process id
 
@@ -31,8 +32,8 @@ class Sync:
                   with the process number.
 
 
-            Each time self.bluetooth.send_message() is called, it should include the process number (short: 'h').
-                - For example : self.bluetooth.send_message('<hd', self.PROCESS, self.last_blink)
+            Each time self.bluetooth.send_message() is called, it should include the process number (uchar: 'B').
+                - For example : self.bluetooth.send_message('<Bd', self.PROCESS, self.last_blink)
                 - self.bluetooth.handle_client() will recognize the process that uses the buffer and place it in the
                   right row of self.bluetooth.buffer
 
@@ -40,7 +41,7 @@ class Sync:
                 - Using above example: self.bluetooth.buffer will in the following structure: ['d', ..., 'd']
         """
 
-        if len(msg_type) != len(init_state):
+        if len(state_struct) != len(init_state):
             print("The specified data type must be the same length of initial state")
             raise Exception
 
@@ -50,11 +51,11 @@ class Sync:
         self.more_data = [-1]  # For saving more than only the state (not used when self.more_data[0] == -1)
         temp = [-1.0]*len(init_state)
         self.buffer = [[-1, *temp, 0] for _ in range(len(bt.RPIS_MACS))]  # Neighbors messages [iteration, state, ACK]
-        self.compute_state = compute_state
+        self.next_state = next_state
 
         self.PROCESS = process_id
         self.DELAY = delay
-        self.TYPE = f'<h{msg_type}h'  # First and last 'h' are respectively used for iteration and acknowledgement synchronization loop
+        self.TYPE = f'<H{state_struct}H'  # First and last 'H' are respectively used for iteration and acknowledgement synchronization loop
         self.VERBOSE = verbose
 
 
@@ -121,8 +122,8 @@ class Sync:
                 if self.VERBOSE:
                     print("Wait for ACK")
 
-            # Messages has the structure : [PROCESS_ID, iteration, state, ACK] ([short, short, self.TYPE, short])
-            self.bluetooth.send_message(f'<h{self.TYPE[1:]}', self.PROCESS, i, *self.state, i)  # Send state to neighbors
+            # Messages has the structure : [PROCESS_ID, iteration, state, ACK] ([ushort, ushort, self.TYPE, ushort])
+            self.bluetooth.send_message(f'<B{self.TYPE[1:]}', self.PROCESS, i, *self.state, i)  # Send state to neighbors
 
             # Wait to receive initial neighbor's state
             while any([self.bluetooth.buffer[self.PROCESS][n] == -1 for n in self.bluetooth.neighbors_index]):
@@ -144,10 +145,10 @@ class Sync:
             time.sleep(self.DELAY)
 
             # Send acknowledgement
-            self.bluetooth.send_message(f'<h{self.TYPE[1:]}', self.PROCESS, i, *self.state, i+1)
+            self.bluetooth.send_message(f'<B{self.TYPE[1:]}', self.PROCESS, i, *self.state, i+1)
 
             # Compute the current state
-            self.state = self.compute_state(self.buffer)
+            self.state = self.next_state(self.buffer)
 
             # For data saving
             self.data.append([time.time(), *self.state])

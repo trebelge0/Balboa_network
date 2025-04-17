@@ -55,6 +55,10 @@ Balboa32U4ButtonB buttonB;
 Balboa32U4ButtonC buttonC;
 Balboa32U4Encoders encoders;
 
+int32_t current_time = millis();
+int32_t begin_loop_time = millis();
+int DWM_REFRESH_RATE_MS = 1000; 
+
 void setup()
 {
   // Set up the slave at I2C address 20.
@@ -63,6 +67,7 @@ void setup()
   SERIAL_PORT.begin(BAUD_RATE);
   // Play startup sound.
   buzzer.play("v10>>g16>>>c16");
+  SERIAL_PORT.setTimeout(30);  // Each time DWM is read, the main loop will take at least 30 ms. This is bad for the balancing loop then it need to be minimized.
 }
 
 void loop()
@@ -108,11 +113,18 @@ void loop()
   slave.buffer.leftEncoder = encoders.getCountsLeft();
   slave.buffer.rightEncoder = encoders.getCountsRight();
 
-  dwmLocGet();
+  if (millis() - current_time > DWM_REFRESH_RATE_MS) {
+    dwmLocGet();
+    current_time = millis();
+  }
 
   // When you are done WRITING, call finalizeWrites() to make modified
   // data available to I2C master.
   slave.finalizeWrites();
+
+  //Serial.print("Loop time: ");
+  //Serial.println(millis() - begin_loop_time);
+  //begin_loop_time = millis();
 }
 
 void hexStr(const uint8_t* data, size_t length) {
@@ -147,15 +159,16 @@ void dwmLocGet() {
     const uint8_t DIST_LEN = 7;
 
     uint8_t tx_data[] = {DWM1001_TLV_TYPE_CMD_LOC_GET, 0x00};
+
     SERIAL_PORT.write(tx_data, sizeof(tx_data));
     
-    delay(10);
+    delay(1);
     
     uint8_t rx_data[100];
     size_t len = SERIAL_PORT.readBytes(rx_data, sizeof(rx_data));
     
-    Serial.print("Received: ");
-    hexStr(rx_data, len);
+    //Serial.print("Received: ");
+    //hexStr(rx_data, len);
     
     size_t data_cnt = 0;
     if (rx_data[data_cnt] == TLV_TYPE_RET_VAL) {
@@ -178,9 +191,9 @@ void dwmLocGet() {
         Serial.print(", QF="); Serial.println(qf);
         data_cnt += POS_LEN;
 
-        slave.buffer.x = x*1000;
-        slave.buffer.y = y*1000;
-        slave.buffer.z = z*1000;
+        slave.buffer.x = x;
+        slave.buffer.y = y;
+        slave.buffer.z = z;
     }
 
     if (rx_data[data_cnt] == TLV_TYPE_RNG_AN_POS_DIST) {
@@ -202,7 +215,7 @@ void dwmLocGet() {
               Serial.print(", d="); Serial.print(d);
               Serial.print(", QF="); Serial.println(qf);
 
-              slave.buffer.distance = d*1000;
+              slave.buffer.distance = d;
 
               data_cnt += DIST_LEN;
 

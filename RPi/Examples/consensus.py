@@ -18,7 +18,7 @@ sys.path.append(src_path)
 from balboa import Balboa
 from bluetooth import Bluetooth
 from synchronous import Sync
-from utils import RPIS_MACS, ADJACENCY, check_args, save_data, signal_handler
+from utils import RPIS_MACS, ADJACENCY, check_args, signal_handler
 
 
 # ------- Functions --------
@@ -48,7 +48,7 @@ i2c = bool(i2c)
 f = init_state
 
 # Communication
-bluetooth = Bluetooth(ID, RPIS_MACS, matrix=ADJACENCY, verbose=True)
+bluetooth = Bluetooth(ID, RPIS_MACS, ADJACENCY, verbose=True)
 if i2c:
     rocky = Balboa()
 

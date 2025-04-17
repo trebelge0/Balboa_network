@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
-plt.rcParams.update({'font.size': 12})
+plt.rcParams.update({'font.size': 16})
 
 
 def lire_donnees(fichier):
@@ -45,8 +45,8 @@ def filter(data):
 
 
 measures = lire_donnees('dwm_calibration_data')
-#del measures[3.0]
-#del measures[4.0]
+del measures[3.0]
+del measures[4.0]
 filtered_measures = filter(measures)  # Remove outliers
 
 mean_values = {key: np.mean(value) for key, value in filtered_measures.items()}  # Mean
@@ -67,39 +67,35 @@ y_pred = regressor.predict(X) # Linear regression
 slope = regressor.coef_[0]
 oo = regressor.intercept_
 
-plt.figure(figsize=(10, 6))
-for distance in measures.keys():
-    plt.scatter([distance] * len(measures[distance]), measures[distance], alpha=0.5)
+fig, axs = plt.subplots(2, 1, figsize=(10, 12))
 
 for distance in measures.keys():
-    plt.errorbar(distance, mean_values[distance], yerr=std_devs[distance], fmt='o', color='black')
+    axs[0].scatter([distance] * len(measures[distance]), measures[distance], alpha=0.5)
 
-plt.plot(distances, y_pred, color='red', label='Linear regression')
-plt.plot(distances, distances, label='Actual value', linestyle='--')
+for distance in measures.keys():
+    axs[0].errorbar(distance, mean_values[distance], yerr=std_devs[distance], fmt='o', color='black')
 
-plt.xlabel("Actual distance (m)")
-plt.ylabel("Measured distance (m)")
-plt.legend()
-plt.savefig("model.png")
-plt.grid(True)
-plt.show()
+axs[0].plot(distances, y_pred, color='red', label='Estimated distance')
+axs[0].plot(distances, distances, label='Not calibrated model', linestyle='--')
+axs[0].set_ylabel("Measured distance (m)")
+axs[0].legend()
+axs[0].grid(True)
 
 
-plt.figure(figsize=(10, 6))
-
-errors_calibrated = (-np.array(moyennes_mesures) + y_pred)*100
+errors_calibrated = (np.array(moyennes_mesures) - y_pred)*100
 errors_raw = (-np.array(moyennes_mesures) + np.array(distances))*100
 
 for i, distance in enumerate(measures.keys()):
-    plt.scatter([distance] * len(measures[distance]), -np.array(measures[distance])*100 + 100*np.array([list(y_pred)[i]] * len(measures[distance])), alpha=0.5)
+    axs[1].scatter([distance] * len(measures[distance]), np.array(measures[distance])*100 - 100*np.array([list(y_pred)[i]] * len(measures[distance])), alpha=0.5)
     #plt.scatter([distance] * len(filtered_measures[distance]), -np.array(filtered_measures[distance])*100 + 100*np.array([list(y_pred)[i]] * len(filtered_measures[distance])), alpha=0.5)
 
-plt.plot(distances, errors_calibrated, label='Calibration error', color='green')
-plt.xlabel("Actual distance (m)")
-plt.ylabel("Calibrated measure error (cm)")
-plt.legend()
-plt.savefig("error.png")
-plt.grid(True)
+axs[1].plot(distances, errors_calibrated, label='Average residual error', color='green')
+axs[1].set_xlabel("Actual distance (m)")
+axs[1].set_ylabel("Residual error (cm)")
+axs[1].legend()
+axs[1].grid(True)
+plt.tight_layout()
+plt.savefig("cal.png")
 plt.show()
 
 print("------- Calibrated model -------")

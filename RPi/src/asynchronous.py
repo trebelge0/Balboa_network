@@ -10,13 +10,13 @@ import struct
 
 class Async:
 
-    def __init__(self, bt, init_state, f, msg_type, delay=0, process_id=0, verbose=True):
+    def __init__(self, bt, init_state, next_msg, msg_struct, delay=0, process_id=0, verbose=True):
         """
         Args:
             bt:                     instance of Bluetooth used for this process.
             init_state:             list of initial value of the RPi state (size:len(bluetooth.buffer)-2)
-            f(buffer):              execute something based on buffer
-            msg_type:               str corresponding to the state type base on struct types (size:len(init_state))
+            next_msg(buffer):              execute something based on buffer
+            msg_struct:               str corresponding to the state type base on struct types (size:len(init_state))
             delay:                  optional delay between each message
             process_id:             optional int corresponding to the process id
 
@@ -31,8 +31,8 @@ class Async:
                   with the process number.
 
 
-            Each time self.bluetooth.send_message() is called, it should include the process number (short: 'h').
-                - For example : self.bluetooth.send_message('<hd', self.PROCESS, self.last_blink)
+            Each time self.bluetooth.send_message() is called, it should include the process number (ushort: 'H').
+                - For example : self.bluetooth.send_message('<Hd', self.PROCESS, self.last_blink)
                 - self.bluetooth.handle_client() will recognize the process that uses the buffer and place it in the
                   right row of self.bluetooth.buffer
 
@@ -40,7 +40,7 @@ class Async:
                 - Using above example: self.bluetooth.buffer will in the following structure: ['d', ..., 'd']
         """
 
-        if len(msg_type) != len(init_state):
+        if len(msg_struct) != len(init_state):
             print("The specified data type must be the same length of initial state")
             raise Exception
 
@@ -49,11 +49,11 @@ class Async:
         self.data = [[time.time(), *init_state]]  # For data saving
         self.more_data = [-1]  # For saving more than only the state (not used when self.more_data[0] == -1)
         self.buffer = [[-1.0]*len(init_state) for _ in range(len(bt.RPIS_MACS))]  # Neighbors messages [value(4)]
-        self.function = f
+        self.next_msg = next_msg
 
         self.PROCESS = process_id
         self.DELAY = delay
-        self.TYPE = f'<{msg_type}'
+        self.TYPE = f'<{msg_struct}'
         self.VERBOSE = verbose
 
 
@@ -80,7 +80,7 @@ class Async:
 
             1. It sends a message to all neighbors
             2. It fills the communication buffer with messages sent by neighbors
-            4. Execute function and assign new message
+            4. Execute next_msg and assign new message
             5. Loop back to (1)
 
         Notes:
@@ -92,7 +92,7 @@ class Async:
         while True:
 
             # Messages has the structure : [PROCESS_ID, iteration, state, ACK] ([short, short, self.TYPE, short])
-            self.bluetooth.send_message(f'<h{self.TYPE[1:]}', self.PROCESS, *self.message)  # Send state to neighbors
+            self.bluetooth.send_message(f'<B{self.TYPE[1:]}', self.PROCESS, *self.message)  # Send state to neighbors
 
             # Wait to receive initial neighbor's state
             while any([self.bluetooth.buffer[self.PROCESS][n] == -1 for n in self.bluetooth.neighbors_index]):
@@ -101,7 +101,7 @@ class Async:
 
             self.get_buffer()  # Update neighbor's state knowledge
 
-            self.message = self.function(self.buffer)  # Execute some tasks. It must return the next message as well
+            self.message = self.next_msg(self.buffer)  # Execute some tasks. It must return the next message as well
 
             # For data saving
             self.data.append([time.time(), *self.message])

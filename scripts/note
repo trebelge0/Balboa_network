@@ -19,5 +19,7 @@ target_position = [1, 0]
 ./fetch_csv.sh localize.csv 192.168.164.86 192.168.164.55 192.168.164.210 192.168.164.45
 
 
-192.168.164.86 192.168.164.107 192.168.164.55
-./run.sh /home/trebelge/Documents/Balboa_Network/Examples/main_localize.py 192.168.164.86 192.168.164.107 192.168.164.55
+192.168.18.86 192.168.18.107 192.168.18.122 192.168.18.55
+./deploy.sh 192.168.18.86 192.168.18.107 192.168.18.122 192.168.18.55
+./run.sh /home/trebelge/Documents/Balboa_Network/Examples/test_unicast.py 192.168.18.86 192.168.18.107 192.168.18.122 192.168.18.55
+./command.sh "sudo shutdown -h now" 192.168.18.86 192.168.18.107 192.168.18.122 192.168.18.55

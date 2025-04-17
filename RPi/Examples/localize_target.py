@@ -20,7 +20,7 @@ from balboa import Balboa
 from bluetooth import Bluetooth
 from synchronous import Sync
 from dwm1001 import DWM
-from utils import RPIS_MACS, ADJACENCY, check_args, save_data, signal_handler
+from utils import RPIS_MACS, ADJACENCY, check_args, signal_handler
 
 
 # ------- Functions --------
@@ -68,7 +68,7 @@ signal.signal(signal.SIGINT, lambda signum, frame: signal_handler(signum, frame,
 ID = int(check_args(1)[0])
 
 # Communication
-bluetooth = Bluetooth(ID, RPIS_MACS, matrix=ADJACENCY, verbose=False)
+bluetooth = Bluetooth(ID, RPIS_MACS, ADJACENCY, verbose=False)
 rocky = Balboa()
 
 # Localization sensor
@@ -82,26 +82,28 @@ if __name__ == "__main__":
 
     # When red led shutdown, RPi connected with its neighbors
     #rocky.leds(1, 0, 0)
-    bluetooth.start_network()  # Wait for each neighbor to be connected
+    #bluetooth.start_network()  # Wait for each neighbor to be connected
     #rocky.leds(0, 0, 0)
 
     # Localization
     localize = Sync(bluetooth, [0, 0, 0, 0, 0, 0], gradient_descent, 'ffffff', delay=1e-1)
 
-    sp = serial.Serial("/dev/serial0", 115200, timeout=1)
+    #sp = serial.Serial("/dev/serial0", 115200, timeout=1)
 
     # Initialize position and distance
-    dwm.dwm_loc_get(sp)
+    #dwm.dwm_loc_get(sp)
+    dwm.read()
     dwm.postprocess()
 
     # Run synchronized communication over localization
-    localize_thread = threading.Thread(target=localize.run, daemon=True)
-    localize_thread.start()
+    #localize_thread = threading.Thread(target=localize.run, daemon=True)
+    #localize_thread.start()
 
     while True:
 
         # Read localization information
-        dwm.dwm_loc_get(sp)
+        #dwm.dwm_loc_get(sp)
+        dwm.read()
         dwm.postprocess()
 
         print()
@@ -112,4 +114,4 @@ if __name__ == "__main__":
         print("Position: ", dwm.position)
         print()
 
-        time.sleep(10)
+        time.sleep(1)

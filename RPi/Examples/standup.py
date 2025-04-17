@@ -15,7 +15,7 @@ sys.path.append(src_path)
 from balance import Balancer
 from bluetooth import Bluetooth
 from asynchronous import Async
-from utils import RPIS_MACS, ADJACENCY, check_args, save_data, signal_handler
+from utils import RPIS_MACS, ADJACENCY, check_args, signal_handler
 
 
 # ------- Functions --------
@@ -40,7 +40,7 @@ signal.signal(signal.SIGINT, lambda signum, frame: signal_handler(signum, frame,
 
 ID = int(check_args(1)[0])
 
-bluetooth = Bluetooth(ID, RPIS_MACS, matrix=ADJACENCY, verbose=True)
+bluetooth = Bluetooth(ID, RPIS_MACS, ADJACENCY, verbose=True)
 
 # Balancer
 balancer = Balancer()

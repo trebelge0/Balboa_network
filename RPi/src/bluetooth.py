@@ -12,60 +12,75 @@ from utils import hex_str
 
 
 class Bluetooth:
-    def __init__(self, id, rpis_macs, matrix, verbose=False, processes=1):
+    def __init__(self, id, rpis_macs, adjacency, processes=1, verbose=False):
         """
         rpis_macs: list of MAC addresses of each RPi
         id: index of the current RPi in rpis_macs
         verbose: bool for showing each sent/received msg
-        matrix: adjacent matrix for connections between rpis. Default: queue.
+        adjacency: adjacent adjacency for connections between rpis. Default: queue.
 
         Remark: RPi's need to be paired manually for the first time.
         """
 
+        # Private constants
+        self._PORT = 1
+        self._MAC = rpis_macs[id]
+        self._VERBOSE = verbose  # Show received and sent messages
+        self._PROCESSES = processes
+        # Public constants
+        self.ADJACENCY = adjacency
         self.RPIS_MACS = rpis_macs
-        self.PORT = 1  # RFCOMM port
         self.ID = id
-        self.MAC = rpis_macs[id]
-        self.VERBOSE = verbose  # Show received and sent messages
-        self.PROCESSES = processes
-        self.ADJACENCY = matrix
 
-        self.connections = {}
+        # Private variables
+        self._connections = {}
+
+        # Public variables
         self.buffer = []
         for i in range(processes):
             self.buffer.append([-1]*len(rpis_macs))  # List of last messages from each RPi
         self.neighbors = []
         self.neighbors_index = []
-        self.initialize_neighbors(matrix)
+
+        self.initialize_neighbors()
 
 
-    def initialize_neighbors(self, m):
+    def reinitialize(self, processes):
+        try:
+            p = processes[0]
+        except:
+            processes = [processes]
+        for i in processes:
+            self.buffer.append([-1]*len(self.RPIS_MACS))
+
+
+    def initialize_neighbors(self):
         """
         Initialize neighbors based on adjacent matrix.
         """
 
         # Format check
-        if len(m) != len(self.RPIS_MACS):
+        if len(self.ADJACENCY) != len(self.RPIS_MACS):
             print("The adjacency matrix must of the same size as self.RPIS_MACS.")
             raise Exception
 
-        if len(m) != len(m[0]):
+        if len(self.ADJACENCY) != len(self.ADJACENCY[0]):
             print("The adjacency matrix must be square.")
             raise Exception
 
-        for i in range(len(m)):
-            for j in range(len(m)):
-                if m[i][j] != m[j][i]:
+        for i in range(len(self.ADJACENCY)):
+            for j in range(len(self.ADJACENCY)):
+                if self.ADJACENCY[i][j] != self.ADJACENCY[j][i]:
                     print(f"Adjacency matrix is not symmetric at ({i},{j}) and ({j},{i})")
                     raise Exception
 
-        for i in range(len(m)):
-            if not isinstance(m[self.ID][i], int):
+        for i in range(len(self.ADJACENCY)):
+            if not isinstance(self.ADJACENCY[self.ID][i], int):
                 print("The matrix can only contain integers")
                 raise Exception
 
             # Fill neighbors based on adjacency matrix
-            if m[self.ID][i] != 0 and i != self.ID:
+            if self.ADJACENCY[self.ID][i] != 0 and i != self.ID:
                 self.neighbors.append(self.RPIS_MACS[i])
                 self.neighbors_index.append(i)
 
@@ -88,16 +103,16 @@ class Bluetooth:
                     print(f"Client {addr} closed the connection.")
                     break
 
-                if self.VERBOSE:
+                if self._VERBOSE:
                     print(f"\nMessage from {addr}: {hex_str(data)}")
 
                 for i in range(len(self.RPIS_MACS)):
                     if addr == self.RPIS_MACS[i]:
                         try:
-                            if len(data) >= 2:  # Vérifie que la donnée contient au moins 2 octets
-                                p = struct.unpack('<h', data[:2])[0]
-                                if 0 <= p < self.PROCESSES:
-                                    self.buffer[p][i] = data[2:]
+                            if len(data) >= 1:  # Vérifie que la donnée contient au moins 1 octets
+                                p = data[0]
+                                if 0 <= p < self._PROCESSES:
+                                    self.buffer[p][i] = data[1:]
                             else:
                                 raise ValueError("Received data too short")
                         except Exception as e:
@@ -113,8 +128,8 @@ class Bluetooth:
         print(f"Disconnected from {addr}")
         conn.close()
 
-        if addr in self.connections:
-            del self.connections[addr]
+        if addr in self._connections:
+            del self._connections[addr]
 
 
     def start_server(self):
@@ -123,16 +138,16 @@ class Bluetooth:
         """
 
         server = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
-        server.bind((self.RPIS_MACS[self.ID], self.PORT))
+        server.bind((self.RPIS_MACS[self.ID], self._PORT))
         server.listen(5)
         print("Server ready to receive connections...")
 
         while True:
             try:
-                conn, addr = server.accept()
-                if addr not in self.connections:
-                    self.connections[addr] = conn
-                    threading.Thread(target=self.handle_client, args=(conn, addr[0]), daemon=True).start()
+                client, mac = server.accept()
+                if mac[0] not in self._connections:
+                    self._connections[mac[0]] = client
+                    threading.Thread(target=self.handle_client, args=(client, mac[0]), daemon=True).start()
             except:
                 break
         server.close()
@@ -145,13 +160,13 @@ class Bluetooth:
 
         while True:
             try:
-                if mac in self.connections:
+                if mac in self._connections:
                     return  # Already connected
 
                 print(f"Connection to {mac}...")
                 client = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
-                client.connect((mac, self.PORT))
-                self.connections[mac] = client
+                client.connect((mac, self._PORT))
+                self._connections[mac] = client
                 print(f"Connected to {mac}")
 
                 threading.Thread(target=self.handle_client, args=(client, mac), daemon=True).start()
@@ -161,19 +176,36 @@ class Bluetooth:
                 time.sleep(5)
 
 
-    def send_message(self, type, *args):
+    def send_message(self, type, *args, dest=None):
         """
         Send messages to all neighbors
 
         type: Need to be specified using struct definitions. For example '<hf' is a short followed by a float in little endian.
         args: An undetermined number of variables that will be sent.
         """
+        receivers = {}
+        if dest is None:
+            receivers = self._connections
+        else:
+            try:
+                for i in range(len(dest)):
+                    mac_receiver_i = self.RPIS_MACS[dest[i]]
+                    try:
+                        receivers[mac_receiver_i] = self._connections[mac_receiver_i]
+                    except:
+                        print(
+                            f"Error: all elements of dest argument from Bluetooth.send_message should be the ID of a connected neighbor (ID={mac_receiver_i})")
+                        raise Exception
+            except:
+                print("Error: dest argument from Bluetooth.send_message should be a list")
+                raise TypeError
 
-        for mac, conn in self.connections.items():
+
+        for mac, conn in receivers.items():
 
             try:
                 conn.send(struct.pack(type, *args))
-                if self.VERBOSE:
+                if self._VERBOSE:
                     print(f"Send {args} to {mac}")
             except:
                 print(f"Sending error to {mac}")
@@ -186,20 +218,20 @@ class Bluetooth:
 
         # If a neighbor need to connect, start server in parallel
         for neighbor in self.neighbors:
-            if neighbor < self.MAC:
+            if neighbor < self._MAC:
                 threading.Thread(target=self.start_server, daemon=True).start()
                 break
 
         # Connect to neighbors that has higher MAC address
         for neighbor in self.neighbors:
-            if neighbor > self.MAC:
+            if neighbor > self._MAC:
                 threading.Thread(target=self.connect_to_neighbor, args=(neighbor,), daemon=True).start()
 
         # Wait to be connected with each neighbor
         ready = False
         while not ready:
             time.sleep(1)
-            ready = len(self.connections) == len(self.neighbors)
+            ready = len(self._connections) == len(self.neighbors)
 
         time.sleep(1)
         print("Every neighbors are connected!")

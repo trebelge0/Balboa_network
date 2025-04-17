@@ -18,7 +18,7 @@ sys.path.append(src_path)
 from balboa import Balboa
 from bluetooth import Bluetooth
 from synchronous import Sync
-from utils import RPIS_MACS, ADJACENCY, check_args, save_data, signal_handler
+from utils import RPIS_MACS, ADJACENCY, check_args, signal_handler
 
 
 def blink():
@@ -56,7 +56,7 @@ phase = time.time() % (1 / init_freq)
 
 # Communication
 rocky = Balboa()
-bluetooth = Bluetooth(ID, RPIS_MACS, matrix=ADJACENCY, verbose=False, processes=2)
+bluetooth = Bluetooth(ID, RPIS_MACS, ADJACENCY, verbose=False, processes=2)
 
 # Iterative function: next state is the average with its neighbors state
 compute_average = lambda buf: [np.mean([buf[n][1] for n in bluetooth.neighbors_index + [bluetooth.ID]])]
