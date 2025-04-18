@@ -8,6 +8,7 @@ based on the Balboa self-balancing robot
 
 import os, sys, signal
 import time
+from copy import deepcopy
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 src_path = os.path.abspath(os.path.join(script_dir, "../src"))
@@ -17,6 +18,7 @@ from utils import RPIS_MACS, ADJACENCY, check_args, signal_handler
 from bluetooth import Bluetooth
 from flooding import Flooding
 from balboa import Balboa
+import oled
 
 
 # ------- Global variables --------
@@ -39,7 +41,34 @@ if __name__ == "__main__":
 
     flooding.listen()
 
+    ready_start_time = None
+    last_seen_message = None
+
     while True:
-        if rocky.read_buttons() != (False, False, False) and flooding.ready:
-            flooding.broadcast(f"Hello from agent {ID}")
-        time.sleep(0.2)
+        btn1, btn2, btn3 = rocky.read_buttons()
+
+        # 1. Si un bouton est pressé et broadcast est prêt → envoi
+        if flooding.ready:
+            msg = None
+            if btn1:
+                msg = f"1 from agent {ID}"
+            elif btn2:
+                msg = f"2 from agent {ID}"
+            elif btn3:
+                msg = f"3 from agent {ID}"
+
+            if msg is not None:
+                flooding.broadcast(msg)
+                ready_start_time = time.time()  # Reset LED timer on send
+
+        if flooding.last_message != last_seen_message:
+            print("reinit")
+            last_seen_message = flooding.last_message
+            oled.write("ACK:"*(len(last_seen_message.viewers)==len(ADJACENCY)) + last_seen_message.data.decode('utf-8'))
+            ready_start_time = time.time()  # Reset LED timer on reception
+
+        if ready_start_time is not None:
+            if time.time() - ready_start_time >= 3:
+                rocky.leds(0, 0, 0)
+
+        time.sleep(0.1)

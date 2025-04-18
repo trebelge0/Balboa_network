@@ -9,18 +9,21 @@ import time
 import threading
 import struct
 from collections import deque, namedtuple
+from copy import deepcopy
+from multiprocessing.reduction import sendfds
 
-UnicastMessage = namedtuple('UnicastMessage', ['sender', 'receiver', 'ACK', 'index', 'size', 'data', 'path'])
+UnicastMessage = namedtuple('UnicastMessage', ['id', 'sender', 'receiver', 'ACK', 'index', 'size', 'data', 'path'])
 
 
 class Unicast:
     def __init__(self, bt, rocky, process_id=0, verbose=True, delay=0):
 
         # Public
-        self.buffer = [UnicastMessage(-1, -1, False, 0, 0, b"", []) for _ in range(len(bt.RPIS_MACS))]
+        self.buffer = [UnicastMessage(0, -1, -1, False, 0, 0, b"", []) for _ in range(len(bt.RPIS_MACS))]
         self.last_message = None
         self.ready = True
         self.data = []
+        self.message_id = 0
 
         # Private
         self._bluetooth = bt
@@ -57,14 +60,15 @@ class Unicast:
         for i in range(len(self.buffer)):
             if self._bluetooth.buffer[self._PROCESS][i] != -1:
                 packed = self._bluetooth.buffer[self._PROCESS][i]
-                sender = struct.unpack('B', packed[:1])[0]
-                receiver = struct.unpack('B', packed[1:2])[0]
-                ack = struct.unpack('?', packed[2:3])[0]
-                index = struct.unpack('B', packed[3:4])[0]
-                size = struct.unpack('H', packed[4:6])[0]
-                data = struct.unpack(f'{size}s', packed[6:6 + size])[0]
-                path = struct.unpack(f'{len(packed[6+size:])}B', packed[6+size:])
-                self.buffer[i] = UnicastMessage(sender, receiver, ack, index, size, data, path)
+                id = struct.unpack('H', packed[:2])[0]
+                sender = struct.unpack('B', packed[2:3])[0]
+                receiver = struct.unpack('B', packed[3:4])[0]
+                ack = struct.unpack('?', packed[4:5])[0]
+                index = struct.unpack('B', packed[5:6])[0]
+                size = struct.unpack('H', packed[6:8])[0]
+                data = struct.unpack(f'{size}s', packed[8:8 + size])[0]
+                path = struct.unpack(f'{len(packed[8+size:])}B', packed[8+size:])
+                self.buffer[i] = UnicastMessage(id, sender, receiver, ack, index, size, data, path)
 
 
     def listen(self, mode=True):
@@ -76,15 +80,15 @@ class Unicast:
             self._listening = False
 
 
-    def send(self, data: str, destination: int, ack=False):
+    def send(self, data: str, destination: int, ack=False, id=0):
         path = self._get_path(destination)
-
         if not path or len(path) < 2:
             print(f"No path to {destination}")
             return
 
         data_bytes = data.encode('utf-8')
-        msg = UnicastMessage(
+        message = UnicastMessage(
+            id=self.message_id*int(not ack) + id*int(ack),
             sender=self._ID,
             receiver=destination,
             ACK=ack,
@@ -93,10 +97,10 @@ class Unicast:
             data=data_bytes,
             path=path
         )
-
-        self._forward(msg)
+        self.message_id += int(not ack)
+        self._forward(message)
         self._rocky.leds(0, int(not ack), int(ack))  # Yellow
-        print(f"[{self._ID}] Initiating unicast: {msg}")
+        print(f"[{self._ID}] Initiating unicast: {message}")
 
 
     def _listen_loop(self):
@@ -104,15 +108,14 @@ class Unicast:
         while self._listening:
 
             message = None
-            while message == self.last_message or message is None:
-                last_buffer = self.buffer
+            while message is None:
+                last_buffer = deepcopy(self.buffer)
                 self._get_buffer()
                 for i in range(len(self.buffer)):
                     if last_buffer[i] != self.buffer[i]:
                         message = self.buffer[i]
-                time.sleep(0.1)
-
-            self.last_message = message
+                        self.last_message = message
+                        break
 
             if self._ID == message.receiver:
 
@@ -123,14 +126,13 @@ class Unicast:
 
                 # Send ACK back to sender
                 if not message.ACK:
-                    self.send(f"ACK:{message.data.decode('utf-8')}", message.sender, True)
+                    self.send(f"ACK:{message.data.decode('utf-8')}", message.sender, ack=True, id=message.id)
                 elif self._VERBOSE:
                     print("Acknowledgement received")
                     print()
 
 
-            elif not self.ready:
-
+            else:
                 if self._VERBOSE:
                     print(f"Forwarding message from {message.sender} to {message.receiver}")
                 self._forward(message._replace(index=message.index + 1))
@@ -142,7 +144,6 @@ class Unicast:
                     self._rocky.leds(0, 0, 1)  # Green on ACK
                     self.ready = True
 
-            time.sleep(0.1)
             time.sleep(self._DELAY)
 
 
@@ -153,11 +154,12 @@ class Unicast:
         next_hop = msg.path[msg.index + 1]
         path_len = len(msg.path)
 
-        msg_type = f'<BBB?BH{msg.size}s{path_len}B'
+        msg_type = f'<BHBB?BH{msg.size}s{path_len}B'
 
         self._bluetooth.send_message(
             msg_type,
             self._PROCESS,
+            msg.id,
             msg.sender,
             msg.receiver,
             msg.ACK,

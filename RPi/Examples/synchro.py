@@ -15,6 +15,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 src_path = os.path.abspath(os.path.join(script_dir, "../src"))
 sys.path.append(src_path)
 
+import oled
 from balboa import Balboa
 from bluetooth import Bluetooth
 from synchronous import Sync
@@ -78,5 +79,9 @@ if __name__ == "__main__":
     consensus_thread.start()
     synchro_thread = threading.Thread(target=freq_consensus.run, daemon=True)
     synchro_thread.start()
+    blink_thread = threading.Thread(target=blink, daemon=True)
+    blink_thread.start()
 
-    blink()
+    while True:
+        oled.write(f"f: {round(freq_consensus.state, 4)}, ph: {round(phase_consensus.state, 4)}")
+        time.sleep(0.1)

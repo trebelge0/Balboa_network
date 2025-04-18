@@ -16,6 +16,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 src_path = os.path.abspath(os.path.join(script_dir, "../src"))
 sys.path.append(src_path)
 
+import oled
 from balboa import Balboa
 from bluetooth import Bluetooth
 from synchronous import Sync
@@ -113,5 +114,7 @@ if __name__ == "__main__":
         print("Distance: ", dwm.distance)
         print("Position: ", dwm.position)
         print()
+
+        oled.write(f"x: {localize.state[0].round(3)}, y: {localize.state[1].round(3)}")
 
         time.sleep(1)

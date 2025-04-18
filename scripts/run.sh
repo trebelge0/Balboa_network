@@ -39,7 +39,7 @@ for ARGUMENT in "${RPIS[@]}"; do
 
     gnome-terminal --tab -- bash -c "echo 'Connection SSH to $HOST with ID=$ID'; \
     ssh -t -i $SSH_KEY $USER@$HOST 'echo \"Python script launched on $HOST with ID=$ID and parameters: $PARAMS\"; \
-    sudo python3 $PYTHON_PROGRAM $ID $PARAMS; exec bash'" &
+    sudo ./stats_env/bin/python3 $PYTHON_PROGRAM $ID $PARAMS; exec bash'" &
 
     ((ID++))
 done

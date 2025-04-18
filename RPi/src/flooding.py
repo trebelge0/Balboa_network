@@ -10,7 +10,7 @@ import time
 import threading
 import struct
 from collections import namedtuple
-from utils import hex_str
+from copy import deepcopy
 
 BroadcastMessage = namedtuple('Message', ['id', 'sender', 'size', 'data', 'viewers'])
 
@@ -20,6 +20,7 @@ class Flooding:
 
         # Public
         self.buffer = [BroadcastMessage(0, -1, 0, b"", set()) for _ in range(len(bt.RPIS_MACS))]
+        self.last_message = None
         self.ready = True
         self.data = []
 
@@ -29,7 +30,7 @@ class Flooding:
         self._rocky = rocky
         self._all_rpis_id = set(range(len(self._bluetooth.RPIS_MACS)))
         self._message_id = 0
-        self._last_viewers = {n: set() for n in self._bluetooth.neighbors_index}
+        self._last_viewers = set()
 
         # Constants
         self._PROCESS = process_id
@@ -51,7 +52,7 @@ class Flooding:
             data=data_byte,
             viewers={self._ID}
         )
-        self._last_viewers = {n: set() for n in self._bluetooth.neighbors_index}
+        self._last_viewers = set()
         self._flood(msg)
         self._rocky.leds(0, 1, 0)  # Yellow
         print(f"[{self._ID}] Initiating flood: {msg}")
@@ -83,73 +84,58 @@ class Flooding:
 
         while self._listening:
 
-            self._get_buffer()
+            message = None
+            while message is None:
+                last_buffer = deepcopy(self.buffer)
+                self._get_buffer()
+                for i in range(len(self.buffer)):
+                    if last_buffer[i] != self.buffer[i]:
+                        message = self.buffer[i]
+                        self.last_message = message
+                        break
 
-            for n in self._bluetooth.neighbors_index:
+            if self._ID not in message.viewers and self.ready:  # Receive new message
 
-                message = self.buffer[n]
+                if message.viewers | {self._ID} == self._all_rpis_id:
+                    if self._VERBOSE:
+                        print(f"[{self._ID}] All nodes reached! Turning GREEN")
+                    self._rocky.leds(0, 0, 1)
+                    self.ready = True
+                else:
+                    self._rocky.leds(0, 1, 0)  # Yellow
+                    self.ready = False
 
-                if message.sender != -1:
+                self._flood(message._replace(viewers=message.viewers | {self._ID}))
 
-                    print()
-                    print(f"[{self._ID}] New message from {message.sender}: {message.data.decode('utf-8')}")
-                    print(self._message_id)
-                    print(self._last_viewers)
-                    print(n)
-                    print()
+                if self._message_id != message.id:
+                    self._last_viewers = {n: set() for n in self._bluetooth.neighbors_index}
+                self._last_viewers = message.viewers | {self._ID}
 
-                    if self._ID not in message.viewers and self.ready:  # Receive new message
+                self._message_id = message.id
 
-                        next_msg = BroadcastMessage(
-                            id=message.id,
-                            sender=message.sender,
-                            size=message.size,
-                            data=message.data,
-                            viewers=message.viewers | {self._ID}
-                        )
-                        if message.viewers | {self._ID} == self._all_rpis_id:
+
+            elif self._message_id == message.id and not self.ready:
+
+                if message.viewers == self._all_rpis_id:
+                    if self._VERBOSE:
+                        print(f"[{self._ID}] All nodes reached! Turning GREEN")
+                    self._rocky.leds(0, 0, 1)
+                    self.ready = True
+                    self._flood(message)
+
+                elif message.viewers != self._last_viewers:  # Viewers changed
+
+                    self._last_viewers = message.viewers | self._last_viewers
+
+                    if message.viewers | self._last_viewers == self._all_rpis_id:
+                        if self._VERBOSE:
                             print(f"[{self._ID}] All nodes reached! Turning GREEN")
-                            self._rocky.leds(0, 0, 1)
-                            self.ready = True
-                        else:
-                            self._rocky.leds(0, 1, 0)  # Yellow
-                            self.ready = False
+                        self._rocky.leds(0, 0, 1)
+                        self.ready = True
 
-                        self._flood(next_msg)
-                        if self._message_id != message.id:
-                            self._last_viewers = {n: set() for n in self._bluetooth.neighbors_index}
-                        self._message_id = message.id
-                        self._last_viewers[n] = message.viewers | {self._ID}
+                    self._flood(message._replace(viewers=self._last_viewers))
+                    self.ready = False
 
-
-                    elif self._message_id == message.id and not self.ready:
-
-                        if message.viewers == self._all_rpis_id:
-
-                            print(f"[{self._ID}] All nodes reached! Turning GREEN")
-                            self._rocky.leds(0, 0, 1)
-                            self.ready = True
-                            self._flood(message)
-
-                        elif message.viewers != self._last_viewers[n]:  # Viewers changed
-                            next_msg = BroadcastMessage(
-                                id=message.id,
-                                sender=message.sender,
-                                size=message.size,
-                                data=message.data,
-                                viewers=message.viewers | self._last_viewers[n]
-                            )
-                            self._last_viewers[n] = message.viewers | self._last_viewers[n]
-
-                            if message.viewers | self._last_viewers[n] == self._all_rpis_id:
-                                print(f"[{self._ID}] All nodes reached! Turning GREEN")
-                                self._rocky.leds(0, 0, 1)
-                                self.ready = True
-
-                            self._flood(next_msg)
-                            self.ready = False
-
-            time.sleep(0.1)
             time.sleep(self._DELAY)
 
 
@@ -163,7 +149,5 @@ class Flooding:
                                      msg.size,
                                      msg.data,
                                      *msg.viewers)
-
-        print(f"[{self._ID}] Sent to neighbors")
-
-        time.sleep(0.05)
+        if self._VERBOSE:
+            print(f"[{self._ID}] Sent to neighbors")
