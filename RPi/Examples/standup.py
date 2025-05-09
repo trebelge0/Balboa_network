@@ -1,8 +1,9 @@
 """
-Romain Englebert - Master's Thesis
-© 2025 Romain Englebert.
+* Master's Thesis *
+Implementation of a robotic swarm platform
+based on the Balboa self-balancing robot
+© 2025 Romain Englebert
 """
-
 
 import sys
 import os

@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-plt.rcParams.update({'font.size': 16})
+plt.rcParams.update({'font.size': 20})
 
 
 def lire_donnees(fichier):
@@ -86,10 +86,12 @@ plt.scatter(filtered_dict.keys(), filtered_dict.values(), alpha=0.9, label='Filt
 plt.scatter(outliers_dict.keys(), outliers_dict.values(), alpha=0.9, color='red', label='Outlier')
 plt.plot(np.arange(0, len(measures), 1), [upper]*len(measures), alpha=0.9, linestyle='--', color='black', label='Outlier bounds')
 plt.plot(np.arange(0, len(measures), 1), [lower]*len(measures), alpha=0.9, linestyle='--', color='black')
+plt.plot(np.arange(0, len(measures), 1), [2.25]*len(measures), alpha=0.9, linestyle='--', color='red', label='Actual distance')
 plt.plot(ma, color='orange', linewidth=2, label=f'Moving average (window size: {WINDOW_SIZE})')
 plt.xlabel('Measures')
 plt.ylabel('Measured distance (m)')
 plt.grid()
 plt.legend(loc='lower right')
+plt.tight_layout()
 plt.savefig(f'filt_{WINDOW_SIZE}.png')
 plt.show()

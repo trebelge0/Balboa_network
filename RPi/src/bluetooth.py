@@ -27,6 +27,7 @@ class Bluetooth:
         self._MAC = rpis_macs[id]
         self._VERBOSE = verbose  # Show received and sent messages
         self._PROCESSES = processes
+
         # Public constants
         self.ADJACENCY = adjacency
         self.RPIS_MACS = rpis_macs
@@ -43,15 +44,6 @@ class Bluetooth:
         self.neighbors_index = []
 
         self.initialize_neighbors()
-
-
-    def reinitialize(self, processes):
-        try:
-            p = processes[0]
-        except:
-            processes = [processes]
-        for i in processes:
-            self.buffer.append([-1]*len(self.RPIS_MACS))
 
 
     def initialize_neighbors(self):
@@ -98,7 +90,7 @@ class Bluetooth:
         print(f"Connected to {addr}")
         while True:
             try:
-                data = conn.recv(128)
+                data = conn.recv(1024)
                 if not data:  # Client a fermé la connexion proprement
                     print(f"Client {addr} closed the connection.")
                     break
@@ -178,11 +170,14 @@ class Bluetooth:
 
     def send_message(self, type, *args, dest=None):
         """
-        Send messages to all neighbors
+        Send messages to specified agents
 
         type: Need to be specified using struct definitions. For example '<hf' is a short followed by a float in little endian.
         args: An undetermined number of variables that will be sent.
+        dest []: list of the IDs of the destination agents
+        Default: destination is everyone is dest is None
         """
+
         receivers = {}
         if dest is None:
             receivers = self._connections

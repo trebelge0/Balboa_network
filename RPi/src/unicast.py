@@ -10,7 +10,7 @@ import threading
 import struct
 from collections import deque, namedtuple
 from copy import deepcopy
-from multiprocessing.reduction import sendfds
+
 
 UnicastMessage = namedtuple('UnicastMessage', ['id', 'sender', 'receiver', 'ACK', 'index', 'size', 'data', 'path'])
 
@@ -19,6 +19,7 @@ class Unicast:
     def __init__(self, bt, rocky, process_id=0, verbose=True, delay=0):
 
         # Public
+        self.buffer = [UnicastMessage(0, -1, -1, False, 0, 0, b"", []) for _ in range(len(bt.RPIS_MACS))]
         self.buffer = [UnicastMessage(0, -1, -1, False, 0, 0, b"", []) for _ in range(len(bt.RPIS_MACS))]
         self.last_message = None
         self.ready = True
@@ -100,6 +101,8 @@ class Unicast:
         self.message_id += int(not ack)
         self._forward(message)
         self._rocky.leds(0, int(not ack), int(ack))  # Yellow
+        self.data.append([time.time(), ack])
+
         print(f"[{self._ID}] Initiating unicast: {message}")
 
 
@@ -120,7 +123,7 @@ class Unicast:
             if self._ID == message.receiver:
 
                 if self._VERBOSE:
-                    print(f"Received unicast from {message.sender}: {message.data.decode('utf-8')}")
+                    print(f"Received unicast from {message.sender}: {message.data.decode('utf-8')} at {time.time()}")
                 self._rocky.leds(0, 0, 1)  # Green on receive
                 self.ready = True
 
@@ -134,7 +137,7 @@ class Unicast:
 
             else:
                 if self._VERBOSE:
-                    print(f"Forwarding message from {message.sender} to {message.receiver}")
+                    print(f"Forwarding message from {message.sender} to {message.receiver} at {time.time()}")
                 self._forward(message._replace(index=message.index + 1))
 
                 if not message.ACK:
@@ -143,6 +146,8 @@ class Unicast:
                 elif not self.ready:
                     self._rocky.leds(0, 0, 1)  # Green on ACK
                     self.ready = True
+
+            self.data.append([time.time(), self.ready])
 
             time.sleep(self._DELAY)
 

@@ -1,6 +1,8 @@
 """
-Romain Englebert - Master's Thesis
-© 2025 Romain Englebert.
+* Master's Thesis *
+Implementation of a robotic swarm platform
+based on the Balboa self-balancing robot
+© 2025 Romain Englebert
 """
 
 
@@ -22,7 +24,7 @@ from synchronous import Sync
 from utils import RPIS_MACS, ADJACENCY, check_args, signal_handler
 
 
-def blink():
+def blink(phase_consensus, freq_consensus):
     """
     Blink at specified frequency with a specified dephasage in order to align each rocky's phase.
 
@@ -79,7 +81,7 @@ if __name__ == "__main__":
     consensus_thread.start()
     synchro_thread = threading.Thread(target=freq_consensus.run, daemon=True)
     synchro_thread.start()
-    blink_thread = threading.Thread(target=blink, daemon=True)
+    blink_thread = threading.Thread(target=blink, args=(phase_consensus, freq_consensus), daemon=True)
     blink_thread.start()
 
     while True:

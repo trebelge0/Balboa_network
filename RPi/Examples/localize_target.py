@@ -1,6 +1,8 @@
 """
-Romain Englebert - Master's Thesis
-© 2025 Romain Englebert.
+* Master's Thesis *
+Implementation of a robotic swarm platform
+based on the Balboa self-balancing robot
+© 2025 Romain Englebert
 """
 
 import threading
@@ -76,6 +78,9 @@ rocky = Balboa()
 GAMMA = 4e-3  # step size for gradient descent
 dwm = DWM(rocky, verbose=False)
 
+a = [0.94922] * len(RPIS_MACS)
+b = [-0.103395] * len(RPIS_MACS)
+
 
 # ------- Main --------
 
@@ -87,25 +92,26 @@ if __name__ == "__main__":
     #rocky.leds(0, 0, 0)
 
     # Localization
-    localize = Sync(bluetooth, [0, 0, 0, 0, 0, 0], gradient_descent, 'ffffff', delay=1e-1)
+    localize = Sync(bluetooth, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0], gradient_descent, 'ffffff', delay=1e-1)
 
     #sp = serial.Serial("/dev/serial0", 115200, timeout=1)
 
     # Initialize position and distance
     #dwm.dwm_loc_get(sp)
     dwm.read()
-    dwm.postprocess()
+    dwm.postprocess(a[ID], b[ID])
 
     # Run synchronized communication over localization
     #localize_thread = threading.Thread(target=localize.run, daemon=True)
     #localize_thread.start()
+    #rocky.motors(200,200)
 
     while True:
 
         # Read localization information
         #dwm.dwm_loc_get(sp)
         dwm.read()
-        dwm.postprocess()
+        dwm.postprocess(a[ID], b[ID])
 
         print()
         print("Distances: ", dwm.distances)
@@ -115,6 +121,6 @@ if __name__ == "__main__":
         print("Position: ", dwm.position)
         print()
 
-        oled.write(f"x: {localize.state[0].round(3)}, y: {localize.state[1].round(3)}")
+        oled.write(f"x: {round(localize.state[0], 2)}, y: {round(localize.state[1], 2)}")
 
-        time.sleep(1)
+        time.sleep(0.1)

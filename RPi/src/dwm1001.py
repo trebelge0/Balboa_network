@@ -57,7 +57,7 @@ class DWM:
         self.position = data[1:3]
 
 
-    def postprocess(self):
+    def postprocess(self, a, b):
         """
         Remove outliers and use an approximate linear model of the sensor for distance measurements.
 
@@ -77,8 +77,6 @@ class DWM:
         values = values[(values >= lower_bound) & (values <= upper_bound)]
 
         d = np.mean(values) / 1000
-        a = 0.94922
-        b = -0.103395
 
         self.distance = a * d + b
         self.position = [sum(values) / len(values) for values in zip(*self.positions)]

@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
-plt.rcParams.update({'font.size': 16})
+plt.rcParams.update({'font.size': 20})
 
 
 def lire_donnees(fichier):
@@ -47,6 +47,7 @@ def filter(data):
 measures = lire_donnees('dwm_calibration_data')
 del measures[3.0]
 del measures[4.0]
+
 filtered_measures = filter(measures)  # Remove outliers
 
 mean_values = {key: np.mean(value) for key, value in filtered_measures.items()}  # Mean
@@ -66,6 +67,27 @@ y_pred = regressor.predict(X) # Linear regression
 # estimated_distance = (measured_distance - oo) / slope
 slope = regressor.coef_[0]
 oo = regressor.intercept_
+
+d = 2.25
+plt.figure(figsize=(10, 6))
+print(measures[d])
+plt.hist(measures[d])
+plt.axvline(x=d, color='red', linestyle='--', label='Actual distance')
+values = np.array(measures[d])
+Q1 = np.percentile(values, 25)
+Q3 = np.percentile(values, 75)
+IQR = Q3 - Q1
+lower_bound = Q1 - 1.5 * IQR
+upper_bound = Q3 + 1.5 * IQR
+plt.axvline(x=lower_bound, color='black', linestyle='--', label='IQR bounds')
+plt.axvline(x=upper_bound, color='black', linestyle='--')
+plt.xlabel("Distance classes (m)")
+plt.ylabel("Occurences")
+plt.legend()
+plt.grid()
+plt.tight_layout()
+plt.savefig(f"histo{d}.png")
+plt.show()
 
 fig, axs = plt.subplots(2, 1, figsize=(10, 12))
 

@@ -3,26 +3,20 @@ import tkinter as tk
 class FloodingReliable:
     def __init__(self, master):
         self.master = master
-        self.canvas = tk.Canvas(master, width=600, height=600, bg="white")
+        self.canvas = tk.Canvas(master, width=700, height=100, bg="white")
         self.canvas.pack()
 
         self.radius = 20
-        self.nodes = list(range(10))
         self.positions = {
-            0: (100, 100), 1: (200, 50), 2: (300, 50), 3: (400, 100),
-            4: (50, 200), 5: (450, 200),
-            6: (100, 300), 7: (200, 350), 8: (300, 350), 9: (400, 300),
+            0: (100, 50), 1: (200, 50), 2: (300, 50), 3: (400, 50), 4: (500, 50), 5: (600, 50),
         }
-        self.adjacency = [[0, 1, 0, 0, 1, 0, 0, 0, 0, 1],
-                          [1, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-                          [0, 1, 0, 1, 0, 0, 0, 0, 0, 0],
-                          [0, 0, 1, 0, 0, 1, 0, 0, 0, 0],
-                          [1, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-                          [0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
-                          [0, 0, 0, 0, 1, 0, 0, 1, 0, 0],
-                          [0, 0, 0, 0, 0, 0, 1, 0, 1, 0],
-                          [0, 0, 0, 0, 0, 0, 0, 1, 0, 1],
-                          [1, 0, 0, 0, 0, 1, 0, 0, 1, 0]]
+        self.nodes = list(range(len(self.positions)))
+        self.adjacency = [[1, 1, 0, 0, 0, 0],
+                         [1, 1, 1, 0, 0, 0],
+                         [0, 1, 1, 1, 0, 0],
+                         [0, 0, 1, 1, 1, 0],
+                         [0, 0, 0, 1, 1, 1],
+                         [0, 0, 0, 0, 1, 1]]
         self.edges = {i: [] for i in self.nodes}
         self.initialize_neighbors()
 
@@ -31,7 +25,7 @@ class FloodingReliable:
         self.node_viewers = {i: set() for i in self.nodes}
 
         self._draw_graph()
-        self.master.after(1000, lambda: self._receive(0, set()))  # Start at node 0
+        self.master.after(1000, lambda: self._receive(1, set()))  # Start at node 0
 
     def initialize_neighbors(self):
         for i in self.nodes:
@@ -63,7 +57,7 @@ class FloodingReliable:
         # Merge viewers
         old_set = self.node_viewers[node].copy()
         self.node_viewers[node].update(incoming_viewers)
-        delay = 1000
+        delay = 500
 
         # If it's the first time seeing the message, add self to viewers and turn orange
         if self.color_status[node] == "red":

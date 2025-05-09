@@ -57,7 +57,7 @@ Balboa32U4Encoders encoders;
 
 int32_t current_time = millis();
 int32_t begin_loop_time = millis();
-int DWM_REFRESH_RATE_MS = 1000; 
+int DWM_REFRESH_RATE_MS = 100; 
 
 void setup()
 {
@@ -167,8 +167,8 @@ void dwmLocGet() {
     uint8_t rx_data[100];
     size_t len = SERIAL_PORT.readBytes(rx_data, sizeof(rx_data));
     
-    //Serial.print("Received: ");
-    //hexStr(rx_data, len);
+    Serial.print("Received: ");
+    hexStr(rx_data, len);
     
     size_t data_cnt = 0;
     if (rx_data[data_cnt] == TLV_TYPE_RET_VAL) {

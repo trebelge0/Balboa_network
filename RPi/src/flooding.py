@@ -12,19 +12,20 @@ import struct
 from collections import namedtuple
 from copy import deepcopy
 
+# Message structure
 BroadcastMessage = namedtuple('Message', ['id', 'sender', 'size', 'data', 'viewers'])
 
 
 class Flooding:
     def __init__(self, bt, rocky, process_id=0, verbose=True, delay=0):
 
-        # Public
+        # Public variables
         self.buffer = [BroadcastMessage(0, -1, 0, b"", set()) for _ in range(len(bt.RPIS_MACS))]
         self.last_message = None
         self.ready = True
         self.data = []
 
-        # Private
+        # Private variables
         self._listening = False
         self._bluetooth = bt
         self._rocky = rocky
@@ -32,7 +33,7 @@ class Flooding:
         self._message_id = 0
         self._last_viewers = set()
 
-        # Constants
+        # Private constants
         self._PROCESS = process_id
         self._VERBOSE = verbose
         self._ID = bt.ID
@@ -40,9 +41,15 @@ class Flooding:
 
 
     def broadcast(self, data: str):
+        """
+        Initiate broadcast to all agents
+
+        data: message to be sent
+        """
 
         data_byte = data.encode('utf-8')
         self.ready = False
+        self.data.append([time.time(), self.ready])
         self._message_id += 1
 
         msg = BroadcastMessage(
@@ -52,10 +59,14 @@ class Flooding:
             data=data_byte,
             viewers={self._ID}
         )
-        self._last_viewers = set()
-        self._flood(msg)
+
+        self._last_viewers = {self._ID}
+        self._flood(msg)  # Send message to all neighbors
+
         self._rocky.leds(0, 1, 0)  # Yellow
-        print(f"[{self._ID}] Initiating flood: {msg}")
+
+        if self._VERBOSE:
+            print(f"[{self._ID}] Initiating flood: {msg}")
 
 
     def listen(self, mode=True):
@@ -135,6 +146,8 @@ class Flooding:
 
                     self._flood(message._replace(viewers=self._last_viewers))
                     self.ready = False
+
+            self.data.append([time.time(), self.ready])
 
             time.sleep(self._DELAY)
 

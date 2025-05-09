@@ -19,7 +19,17 @@ target_position = [1, 0]
 ./fetch_csv.sh localize.csv 192.168.164.86 192.168.164.55 192.168.164.210 192.168.164.45
 
 
-192.168.18.86 192.168.18.107 192.168.18.122 192.168.18.55
-./deploy.sh 192.168.18.86 192.168.18.107 192.168.18.122 192.168.18.55
-./run.sh /home/trebelge/Documents/Balboa_Network/Examples/test_unicast.py 192.168.18.86 192.168.18.107 192.168.18.122 192.168.18.55
+192.168.3.86 192.168.3.107 192.168.3.122
+./deploy.sh 192.168.3.86 192.168.3.107 192.168.3.122
+./run.sh /home/trebelge/Documents/Balboa_Network/Examples/localize_target.py 192.168.3.86 192.168.3.107 192.168.3.122
+./run.sh /home/trebelge/Documents/Balboa_Network/Examples/consensus.py 192.168.3.86:2 192.168.3.107:4 192.168.3.122:5
 ./command.sh "sudo shutdown -h now" 192.168.18.86 192.168.18.107 192.168.18.122 192.168.18.55
+
+
+./deploy.sh 192.168.3.55 192.168.3.45
+./run.sh /home/trebelge/Documents/Balboa_Network/Performances/latency.py 192.168.3.55 192.168.3.45
+
+192.168.3.86 192.168.3.107 192.168.3.122 192.168.3.55 192.168.3.210 192.168.3.45
+./deploy.sh 192.168.3.86 192.168.3.107 192.168.3.122 192.168.3.55 192.168.3.210 192.168.3.45
+./run.sh /home/trebelge/Documents/Balboa_Network/Examples/test_flood.py 192.168.3.86 192.168.3.107 192.168.3.122 192.168.3.55 192.168.3.210 192.168.3.45
+./fetch_csv.sh flooding.csv 192.168.3.86 192.168.3.107 192.168.3.122 192.168.3.55 192.168.3.210 192.168.3.45

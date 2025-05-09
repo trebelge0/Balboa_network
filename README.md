@@ -2,7 +2,7 @@
 
 This repository contains a communication platform within a Balboa swarm. 
 A RPi is shielded on each Balboa.
-There are two communication protocole used in it:
+There are two communication protocols used in it:
 * I²C communication between RPi and Balboa
 * Bluetooth communication within a RPi graph
 
@@ -34,7 +34,16 @@ The agents are equipped with Decawave DWM1001 UWB modules allowing them to measu
     - [DWM](#dwm)
 - [Examples](#examples)
   - [Consensus](#consensus)
-
+  - [Synchro](#synchro)
+  - [Target localization](#localize)
+  - [StandUp](#standup)
+  - [Flood](#flood)
+  - [Multi-Hop Unicast](#unicast)
+- [Scripts](#scripts)
+  - [deploy.sh](#deploysh)
+  - [run.sh](#runsh)
+  - [fetch_csv.sh](#fetchsh)
+  - [command.sh](#commandsh)
 
 ## System, communication & peripherals
 

@@ -1,6 +1,8 @@
 """
-Romain Englebert - Master's Thesis
-© 2025 Romain Englebert.
+* Master's Thesis *
+Implementation of a robotic swarm platform
+based on the Balboa self-balancing robot
+© 2025 Romain Englebert
 """
 
 
@@ -11,7 +13,7 @@ import signal
 import numpy as np
 import threading
 
-# For being able to import files from ./../src/ and run it from anywhere in the system of the RPi (useful for the run.sh)
+# For being able to import files from ./../src/ and run it from anywhere in the system of the RPi (useful for run.sh)
 script_dir = os.path.dirname(os.path.abspath(__file__))
 src_path = os.path.abspath(os.path.join(script_dir, "../src"))
 sys.path.append(src_path)
