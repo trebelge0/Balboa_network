@@ -6,7 +6,7 @@ import glob
 plt.rcParams.update({'font.size': 12})
 
 # === 1. Lire tous les fichiers CSV ===
-csv_files = glob.glob(os.path.join('../../data/', "*.csv"))
+csv_files = glob.glob(os.path.join('./', "*.csv"))
 
 if not csv_files:
     print("Aucun fichier CSV trouvé dans le dossier.")
@@ -66,8 +66,7 @@ events_agents = [events_agents[i] for i in sorted_indices]
 for idx, (agent_id, events) in enumerate(zip(agent_ids, events_agents)):
     for start, duration, state in events:
         ax.add_patch(mpatches.Rectangle(
-            (start - start_time, idx), duration, 0.8,
-            color=colors[state], edgecolor='black'
+            (start - start_time, idx), duration, 0.8, edgecolor='black', color=colors[state]
         ))
 
 ax.set_ylim(0, len(events_agents))

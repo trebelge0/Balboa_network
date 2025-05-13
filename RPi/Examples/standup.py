@@ -8,6 +8,7 @@ based on the Balboa self-balancing robot
 import sys
 import os
 import signal
+import time
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 src_path = os.path.abspath(os.path.join(script_dir, "../src"))
@@ -29,8 +30,16 @@ def standup(buffer):
             print("standup!")
             print()
             balancer.stand_up()
-            return [True]
-    return [balancer.balancing]
+
+    a = []
+    a.append(balancer.angle)
+    time.sleep(1)
+    a.append(balancer.angle)
+    time.sleep(1)
+    a.append(balancer.angle)
+    time.sleep(1)
+    print(a)
+    return [max(a) < 80]
 
 
 # ---- Global variables ----
@@ -47,7 +56,7 @@ bluetooth = Bluetooth(ID, RPIS_MACS, ADJACENCY, verbose=True)
 balancer = Balancer()
 
 # Stand-up
-standup = Async(bluetooth, [balancer.balancing], standup, '?', delay=10)
+standup = Async(bluetooth, [balancer.balancing], standup, '?', delay=0)
 
 
 if __name__ == "__main__":

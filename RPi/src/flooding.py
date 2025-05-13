@@ -117,11 +117,7 @@ class Flooding:
                     self.ready = False
 
                 self._flood(message._replace(viewers=message.viewers | {self._ID}))
-
-                if self._message_id != message.id:
-                    self._last_viewers = {n: set() for n in self._bluetooth.neighbors_index}
                 self._last_viewers = message.viewers | {self._ID}
-
                 self._message_id = message.id
 
 

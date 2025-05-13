@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
-plt.rcParams.update({'font.size': 20})
+plt.rcParams.update({'font.size': 14})
 
 
 def lire_donnees(fichier):
@@ -11,13 +11,16 @@ def lire_donnees(fichier):
     mesures = {}
     distance = None
     valeurs = []
+    GT = [50, 100, 150, 200]
+    for i in GT:
+        mesures[i] = []
 
     for ligne in lignes:
         ligne = ligne.strip()
-        if 'm' in ligne:
+        if float(ligne) < 10:
             if distance is not None:
-                mesures[distance] = valeurs
-            distance = float(ligne.replace('m', '').strip())
+                mesures[distance].append(valeurs)
+            distance = GT[int(ligne)-1]
             valeurs = []
         else:
             try:
@@ -44,9 +47,8 @@ def filter(data):
     return filtered_data
 
 
-measures = lire_donnees('dwm_calibration_data')
-del measures[3.0]
-del measures[4.0]
+measures = lire_donnees('distance.csv')
+print(measures)
 
 filtered_measures = filter(measures)  # Remove outliers
 
@@ -68,7 +70,7 @@ y_pred = regressor.predict(X) # Linear regression
 slope = regressor.coef_[0]
 oo = regressor.intercept_
 
-d = 2.25
+d = 50
 plt.figure(figsize=(10, 6))
 print(measures[d])
 plt.hist(measures[d])
@@ -104,11 +106,11 @@ axs[0].legend()
 axs[0].grid(True)
 
 
-errors_calibrated = (np.array(moyennes_mesures) - y_pred)*100
-errors_raw = (-np.array(moyennes_mesures) + np.array(distances))*100
+errors_calibrated = (np.array(moyennes_mesures) - y_pred)
+errors_raw = (-np.array(moyennes_mesures) + np.array(distances))
 
 for i, distance in enumerate(measures.keys()):
-    axs[1].scatter([distance] * len(measures[distance]), np.array(measures[distance])*100 - 100*np.array([list(y_pred)[i]] * len(measures[distance])), alpha=0.5)
+    axs[1].scatter([distance] * len(measures[distance]), np.array(measures[distance]) - np.array([list(y_pred)[i]] * len(measures[distance])), alpha=0.5)
     #plt.scatter([distance] * len(filtered_measures[distance]), -np.array(filtered_measures[distance])*100 + 100*np.array([list(y_pred)[i]] * len(filtered_measures[distance])), alpha=0.5)
 
 axs[1].plot(distances, errors_calibrated, label='Average residual error', color='green')
@@ -120,16 +122,3 @@ plt.tight_layout()
 plt.savefig("cal.png")
 plt.show()
 
-print("------- Calibrated model -------")
-print()
-print(f"Calibrated model slope: {1/slope}")
-print(f"Calibrated model origin shift: {-oo/slope}")
-print("Estimated distance = slope * measured_distance + oo")
-print()
-
-print("------- Statistics -------")
-print()
-print(f"Mean error before calibration (cm): {np.mean(errors_raw)}")
-print(f"RMS error before calibration (cm): {np.sqrt(np.mean(errors_raw**2))}")
-print(f"Mean error after calibration(cm): {np.mean(errors_calibrated)}")
-print(f"RMS error after calibration (cm): {np.sqrt(np.mean(errors_calibrated**2))} (cm)")

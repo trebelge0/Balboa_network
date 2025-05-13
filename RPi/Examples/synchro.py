@@ -34,7 +34,7 @@ def blink(phase_consensus, freq_consensus):
 
     while True:
 
-        tol = 1 / (32 * freq_consensus.state[0])
+        tol = 1 / (16 * freq_consensus.state[0])
 
         if phase_consensus.state[0]-tol < time.time() % (1/freq_consensus.state[0]) < phase_consensus.state[0]+tol:
 
@@ -43,7 +43,7 @@ def blink(phase_consensus, freq_consensus):
             rocky.leds(0, 0, 0)
             time.sleep(1 / ( 2 * freq_consensus.state[0]))
             rocky.leds(1, 1, 1)
-            time.sleep(1 / (4 * freq_consensus.state[0]))
+            time.sleep(1 / (3 * freq_consensus.state[0]))
 
         time.sleep(tol)
 
@@ -62,11 +62,11 @@ rocky = Balboa()
 bluetooth = Bluetooth(ID, RPIS_MACS, ADJACENCY, verbose=False, processes=2)
 
 # Iterative function: next state is the average with its neighbors state
-compute_average = lambda buf: [np.mean([buf[n][1] for n in bluetooth.neighbors_index + [bluetooth.ID]])]
+compute_average = lambda buf: [float(np.mean([buf[n][1] for n in bluetooth.neighbors_index + [bluetooth.ID]]))]
 
 # Synchronized communication instances for each process
-phase_consensus = Sync(bluetooth, [phase], compute_average, 'f', process_id=0, delay=5e-1)
-freq_consensus  = Sync(bluetooth, [init_freq], compute_average, 'f', process_id=1, delay=5e-1)
+phase_consensus = Sync(bluetooth, [phase], compute_average, 'f', process_id=0, delay=0.1)
+freq_consensus  = Sync(bluetooth, [init_freq], compute_average, 'f', process_id=1, delay=0.1)
 
 
 if __name__ == "__main__":
@@ -85,5 +85,6 @@ if __name__ == "__main__":
     blink_thread.start()
 
     while True:
-        oled.write(f"f: {round(freq_consensus.state, 4)}, ph: {round(phase_consensus.state, 4)}")
-        time.sleep(0.1)
+        oled.write(f"f: {freq_consensus.state[0]}")
+        oled.write(f"ph: {phase_consensus.state[0]}")
+        time.sleep(1)

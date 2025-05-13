@@ -1,15 +1,18 @@
 import matplotlib.pyplot as plt
 import os
 import glob
-plt.rcParams.update({'font.size': 12})
+plt.rcParams.update({'font.size': 14})
 
-n = 300  # Number of iterations
+
+n = 200  # Number of iterations
 plot_time = True
 plot_start = True
-name = "loop_3"
+name = "Final"
 
 csv_freq = glob.glob(os.path.join(f'{name}/frequency', "*.csv"))
+csv_freq.sort()
 csv_phase = glob.glob(os.path.join(f'{name}/phase', "*.csv"))
+csv_phase.sort()
 csv_files = [csv_freq, csv_phase]
 labels = ["Frequency [Hz]", "Phase [s]"]
 
@@ -60,9 +63,7 @@ for i in range(2):
 
 
 
-axs[0].set_title(f"Synchronization state ({n} iterations)")
 plt.legend()
-
 if plot_time:
     axs[1].set_xlabel("Time [s]")
     plt.tight_layout()

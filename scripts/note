@@ -29,7 +29,18 @@ target_position = [1, 0]
 ./deploy.sh 192.168.3.55 192.168.3.45
 ./run.sh /home/trebelge/Documents/Balboa_Network/Performances/latency.py 192.168.3.55 192.168.3.45
 
-192.168.3.86 192.168.3.107 192.168.3.122 192.168.3.55 192.168.3.210 192.168.3.45
-./deploy.sh 192.168.3.86 192.168.3.107 192.168.3.122 192.168.3.55 192.168.3.210 192.168.3.45
-./run.sh /home/trebelge/Documents/Balboa_Network/Examples/test_flood.py 192.168.3.86 192.168.3.107 192.168.3.122 192.168.3.55 192.168.3.210 192.168.3.45
-./fetch_csv.sh flooding.csv 192.168.3.86 192.168.3.107 192.168.3.122 192.168.3.55 192.168.3.210 192.168.3.45
+192.168.250.86 192.168.250.122 192.168.250.55
+./deploy.sh 192.168.250.86 192.168.250.122 192.168.250.55
+./run.sh /home/trebelge/Documents/Balboa_Network/Examples/synchro.py 192.168.250.86:0.2 192.168.250.122:0.7 192.168.250.55:1
+./fetch_csv.sh synchro_freq.csv 192.168.250.86 192.168.250.122 192.168.250.55
+./fetch_csv.sh synchro_phase.csv 192.168.250.86 192.168.250.122 192.168.250
+
+192.168.250.86 192.168.250.107 192.168.250.122 192.168.250.55 192.168.3.66
+./deploy.sh 192.168.250.86 192.168.250.107 192.168.250.122 192.168.250.55 192.168.250.66
+./run.sh /home/trebelge/Documents/Balboa_Network/Examples/standup.py 192.168.250.86 192.168.250.107 192.168.250.122 192.168.250.55 192.168.250.66
+./fetch_csv.sh standup.csv 192.168.250.86 192.168.250.107 192.168.250.122 192.168.250.55 192.168.250.66
+./command.sh "sudo shutdown -h now" 192.168.250.86 192.168.250.107 192.168.250.122 192.168.250.55 192.168.3.66
+
+./deploy.sh 192.168.250.55
+./run.sh /home/trebelge/Documents/Balboa_Network/Performances/sample_dwm.py 192.168.250.55
+./fetch_csv.sh distance.csv 192.168.250.55

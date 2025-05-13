@@ -34,10 +34,11 @@ def blink():
     """
 
     while True:
-        rocky.leds(0, 0, 0)
-        time.sleep(1 / f)
-        rocky.leds(1, 1, 1)
-        time.sleep(1 / f)
+        if consensus.state[0] > 0:
+            rocky.leds(0, 0, 0)
+            time.sleep(1 / consensus.state[0])
+            rocky.leds(1, 1, 1)
+            time.sleep(1 / consensus.state[0])
 
 
 # ------- Global variables --------
@@ -51,14 +52,14 @@ ID = int(ID)
 f = init_state
 
 # Communication
-bluetooth = Bluetooth(ID, RPIS_MACS, ADJACENCY, verbose=True)
+bluetooth = Bluetooth(ID, RPIS_MACS, ADJACENCY, verbose=False)
 rocky = Balboa()
 
 # Iterative function: next state is the average with its neighbors state
-compute_average = lambda buf: [np.mean([buf[n][1] for n in bluetooth.neighbors_index + [bluetooth.ID]])]
+compute_average = lambda buf: [float(np.mean([buf[n][1] for n in bluetooth.neighbors_index + [bluetooth.ID]]))]
 
 # Synchronized communication instance
-consensus = Sync(bluetooth, [init_state], compute_average, 'f', delay=5e-1)
+consensus = Sync(bluetooth, [init_state], compute_average, 'f', delay=1.5)
 
 
 # ------- Main --------
@@ -74,6 +75,9 @@ if __name__ == "__main__":
     consensus_thread = threading.Thread(target=consensus.run, daemon=True)
     consensus_thread.start()
 
+    blink_thread = threading.Thread(target=blink, daemon=True)
+    blink_thread.start()
+
     while True:
-        oled.write(str(consensus.state))
-        time.sleep(0.1)
+        oled.write(str(round(float(consensus.state[0]), 3)))
+        time.sleep(5e-1)

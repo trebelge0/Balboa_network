@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # === Charger les données ===
-df = pd.read_csv("pos.csv")
+df = pd.read_csv("../pos.csv")
 
 # === Grouper par position connue ===
 grouped = df.groupby('pos_id')

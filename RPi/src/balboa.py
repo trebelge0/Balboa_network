@@ -25,7 +25,7 @@ class Balboa:
     # for the worst-case situation in our example code.
     Balboa.lock.acquire()
     self.bus.write_byte(SLAVE_ADDRESS, address)
-    time.sleep(0.0001)
+    time.sleep(0.001)
     byte_list = [self.bus.read_byte(SLAVE_ADDRESS) for _ in range(size)]
     Balboa.lock.release()
     return struct.unpack(format, bytes(byte_list))
@@ -34,7 +34,7 @@ class Balboa:
     data_array = list(struct.pack(format, *data))
     Balboa.lock.acquire()
     self.bus.write_i2c_block_data(SLAVE_ADDRESS, address, data_array)
-    time.sleep(0.0001)
+    time.sleep(0.001)
     Balboa.lock.release()
 
   def leds(self, red, yellow, green):
@@ -60,3 +60,12 @@ class Balboa:
 
   def read_uwb(self):
     return self.read_unpack(43, 8, 'Hhhh')
+
+  def test_read8(self):
+    self.read_unpack(0, 8, 'cccccccc')
+
+  def test_write8(self):
+    Balboa.lock.acquire()
+    self.bus.write_i2c_block_data(SLAVE_ADDRESS, 0, [0,0,0,0,0,0,0,0])
+    time.sleep(0.0001)
+    Balboa.lock.release()

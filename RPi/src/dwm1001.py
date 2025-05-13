@@ -26,7 +26,7 @@ def error(err_code):
 
 class DWM:
 
-    def __init__(self, balboa, window_size=5, target_addr="20 8D", verbose=False):
+    def __init__(self, balboa, window_size=5, verbose=False):
 
         # Use self.dwm_loc_get() if DWM1001 is connected to the RPi
         self.rocky = balboa
@@ -38,7 +38,6 @@ class DWM:
 
         self.WINDOW = window_size  # Number of measures kept for postprocessing
         self.VERBOSE = verbose
-        self.TARGET_ADDR = target_addr
 
 
     def read(self):

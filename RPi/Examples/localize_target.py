@@ -76,7 +76,7 @@ rocky = Balboa()
 
 # Localization sensor
 GAMMA = 4e-3  # step size for gradient descent
-dwm = DWM(rocky, verbose=False)
+dwm = DWM(rocky, verbose=False, target_addr="20 8D")
 
 a = [0.94922] * len(RPIS_MACS)
 b = [-0.103395] * len(RPIS_MACS)

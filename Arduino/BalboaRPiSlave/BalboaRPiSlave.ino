@@ -57,7 +57,7 @@ Balboa32U4Encoders encoders;
 
 int32_t current_time = millis();
 int32_t begin_loop_time = millis();
-int DWM_REFRESH_RATE_MS = 100; 
+int DWM_REFRESH_RATE_MS = 1000; 
 
 void setup()
 {
@@ -162,9 +162,7 @@ void dwmLocGet() {
 
     SERIAL_PORT.write(tx_data, sizeof(tx_data));
     
-    delay(1);
-    
-    uint8_t rx_data[100];
+    uint8_t rx_data[200];
     size_t len = SERIAL_PORT.readBytes(rx_data, sizeof(rx_data));
     
     Serial.print("Received: ");
@@ -211,11 +209,13 @@ void dwmLocGet() {
               memcpy(&uwb_addr, &rx_data[data_cnt], 2);
               memcpy(&d, &rx_data[data_cnt+2], 4);
               qf = rx_data[data_cnt + 6];
-              Serial.print("UWB addr="); Serial.print(uwb_addr);
+              Serial.print("UWB addr="); Serial.print(uwb_addr, HEX);
               Serial.print(", d="); Serial.print(d);
               Serial.print(", QF="); Serial.println(qf);
 
-              slave.buffer.distance = d;
+              if (uwb_addr == 0xFFFFC933) {
+                slave.buffer.distance = d;
+              }
 
               data_cnt += DIST_LEN;
 

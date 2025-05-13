@@ -119,8 +119,13 @@ class Sync:
             # While not ack i-1
             while self.get_ACK(i):
                 time.sleep(1e-1)
-                if self.VERBOSE:
-                    print("Wait for ACK")
+                """if self.VERBOSE:
+                    print("Wait for ACK")"""
+
+            self.data.append([time.time(), *self.state, 1])
+            if self.more_data[0] != -1:
+                for j in range(len(self.more_data)):
+                    self.data[-1].append(self.more_data[j])
 
             # Messages has the structure : [PROCESS_ID, iteration, state, ACK] ([ushort, ushort, self.TYPE, ushort])
             self.bluetooth.send_message(f'<B{self.TYPE[1:]}', self.PROCESS, i, *self.state, i)  # Send state to neighbors
@@ -128,8 +133,8 @@ class Sync:
             # Wait to receive initial neighbor's state
             while any([self.bluetooth.buffer[self.PROCESS][n] == -1 for n in self.bluetooth.neighbors_index]):
                 time.sleep(1e-1)
-                if self.VERBOSE:
-                    print("Wait for init message")
+                """if self.VERBOSE:
+                    print("Wait for init message")"""
 
             self.get_buffer()  # Update neighbor's state knowledge
 
@@ -137,21 +142,22 @@ class Sync:
             # Wait for the message of the current iteration from all neighbors
             while any([self.buffer[n][0] != i for n in self.bluetooth.neighbors_index]):
                 time.sleep(1e-1)
-                if self.VERBOSE:
-                    print("Wait for all neighbors states")
+                """if self.VERBOSE:
+                    print("Wait for all neighbors states")"""
                 self.get_buffer()  # Update neighbor's state knowledge
 
             # If the RPi lost connection with timeoutafter few iterations, increase this delay
             time.sleep(self.DELAY)
 
             # Send acknowledgement
+            t = time.time()
             self.bluetooth.send_message(f'<B{self.TYPE[1:]}', self.PROCESS, i, *self.state, i+1)
 
             # Compute the current state
             self.state = self.next_state(self.buffer)
 
             # For data saving
-            self.data.append([time.time(), *self.state])
+            self.data.append([t, *self.state, 0])
             if self.more_data[0] != -1:
                 for j in range(len(self.more_data)):
                     self.data[-1].append(self.more_data[j])

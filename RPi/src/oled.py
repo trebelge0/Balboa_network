@@ -37,7 +37,7 @@ class FILOBuffer:
 # Gobal constants
 WIDTH = 128
 HEIGHT = 64
-FONTSIZE = 50
+FONTSIZE = 30
 
 # I²C communication
 i2c = board.I2C()
@@ -58,7 +58,7 @@ x = 0
 font = ImageFont.truetype('/home/trebelge/Documents/Balboa_Network/src/fonts/PixelOperator.ttf', FONTSIZE)
 
 # To keep the 4 last messages
-buffer = FILOBuffer(size=1)
+buffer = FILOBuffer(size=2)
 
 def write(new_msg):
     """
