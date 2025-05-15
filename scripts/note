@@ -41,6 +41,7 @@ target_position = [1, 0]
 ./fetch_csv.sh standup.csv 192.168.250.86 192.168.250.107 192.168.250.122 192.168.250.55 192.168.250.66
 ./command.sh "sudo shutdown -h now" 192.168.250.86 192.168.250.107 192.168.250.122 192.168.250.55 192.168.3.66
 
-./deploy.sh 192.168.250.55
-./run.sh /home/trebelge/Documents/Balboa_Network/Performances/sample_dwm.py 192.168.250.55
-./fetch_csv.sh distance.csv 192.168.250.55
+./deploy.sh 192.168.205.55
+./run.sh /home/trebelge/Documents/Balboa_Network/Performances/sample_dwm.py 192.168.205.55
+./run.sh /home/trebelge/Documents/Balboa_Network/Examples/localize_target.py 192.168.205.55
+./fetch_csv.sh distance.csv 192.168.205.55

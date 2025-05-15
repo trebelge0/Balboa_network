@@ -81,7 +81,7 @@ ma = filtered_moving_average(measures, window_size=WINDOW_SIZE, outlier_indices=
 
 # --- Plot ---
 plt.figure(figsize=(10, 6))
-
+print(filtered_dict)
 plt.scatter(filtered_dict.keys(), filtered_dict.values(), alpha=0.9, label='Filtered')
 plt.scatter(outliers_dict.keys(), outliers_dict.values(), alpha=0.9, color='red', label='Outlier')
 plt.plot(np.arange(0, len(measures), 1), [upper]*len(measures), alpha=0.9, linestyle='--', color='black', label='Outlier bounds')

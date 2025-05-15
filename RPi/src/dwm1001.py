@@ -48,15 +48,15 @@ class DWM:
         data = self.rocky.read_uwb()  # Read values from Balboa via i2c
         print(data)
         # Fill memory buffer for postprocessing
-        self.distances.append(data[0])
-        self.positions.append(data[1:3])
+        self.distances.append(data[0]/10)
+        self.positions.append(list(np.array(data[1:3])/10))
 
         # Update current distance and position
-        self.distance = data[0]
-        self.position = data[1:3]
+        self.distance = data[0]/10
+        self.position = list(np.array(data[1:3])/10)
 
 
-    def postprocess(self, a, b):
+    def postprocess(self):
         """
         Remove outliers and use an approximate linear model of the sensor for distance measurements.
 
@@ -67,18 +67,42 @@ class DWM:
             del self.distances[0]
             del self.positions[0]
 
-        values = np.array(self.distances)
-        Q1 = np.percentile(values, 20)
-        Q3 = np.percentile(values, 80)
+        # Filter distances
+        distances = np.array(self.distances)
+        Q1 = np.percentile(distances, 40)
+        Q3 = np.percentile(distances, 60)
         IQR = Q3 - Q1
         lower_bound = Q1 - 1.5 * IQR
         upper_bound = Q3 + 1.5 * IQR
-        values = values[(values >= lower_bound) & (values <= upper_bound)]
+        distances = distances[(distances >= lower_bound) & (distances <= upper_bound)]
+        d = np.mean(distances)
 
-        d = np.mean(values) / 1000
-
+        # Calibrate distances
+        a = 0.94
+        b = -6.5
         self.distance = a * d + b
-        self.position = [sum(values) / len(values) for values in zip(*self.positions)]
+
+        # Filter position
+        pos_meas = np.array(self.positions)
+        mean_meas = np.mean(pos_meas, axis=0)
+        pos_dist = np.linalg.norm(pos_meas - mean_meas, axis=1)
+        Q1 = np.percentile(pos_dist, 40)
+        Q3 = np.percentile(pos_dist, 60)
+        IQR = Q3 - Q1
+        bound = Q3 + 1.5 * IQR
+        pos_meas = pos_meas[pos_dist <= bound]
+        pos_meas = np.mean(pos_meas, axis=0)
+
+        # Calibrate position
+        A = np.array([np.array([0.788, -0.0129]),
+             np.array([0.0321, 0.9356])])
+        b = np.array([28.5, -4.35])
+
+        print(A)
+        print(pos_meas)
+        print(b)
+
+        self.position = (A @ pos_meas.T).T + b
 
 
     def dwm_loc_get(self, serial_port):

@@ -76,10 +76,7 @@ rocky = Balboa()
 
 # Localization sensor
 GAMMA = 4e-3  # step size for gradient descent
-dwm = DWM(rocky, verbose=False, target_addr="20 8D")
-
-a = [0.94922] * len(RPIS_MACS)
-b = [-0.103395] * len(RPIS_MACS)
+dwm = DWM(rocky, verbose=False)
 
 
 # ------- Main --------
@@ -92,14 +89,14 @@ if __name__ == "__main__":
     #rocky.leds(0, 0, 0)
 
     # Localization
-    localize = Sync(bluetooth, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0], gradient_descent, 'ffffff', delay=1e-1)
+    localize = Sync(bluetooth, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0], gradient_descent, 'ffffff', delay=5e-1)
 
     #sp = serial.Serial("/dev/serial0", 115200, timeout=1)
 
     # Initialize position and distance
     #dwm.dwm_loc_get(sp)
     dwm.read()
-    dwm.postprocess(a[ID], b[ID])
+    dwm.postprocess()
 
     # Run synchronized communication over localization
     #localize_thread = threading.Thread(target=localize.run, daemon=True)
@@ -111,7 +108,7 @@ if __name__ == "__main__":
         # Read localization information
         #dwm.dwm_loc_get(sp)
         dwm.read()
-        dwm.postprocess(a[ID], b[ID])
+        dwm.postprocess()
 
         print()
         print("Distances: ", dwm.distances)
@@ -123,4 +120,4 @@ if __name__ == "__main__":
 
         oled.write(f"x: {round(localize.state[0], 2)}, y: {round(localize.state[1], 2)}")
 
-        time.sleep(0.1)
+        time.sleep(1)
