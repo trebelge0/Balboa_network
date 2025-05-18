@@ -65,8 +65,8 @@ bluetooth = Bluetooth(ID, RPIS_MACS, ADJACENCY, verbose=False, processes=2)
 compute_average = lambda buf: [float(np.mean([buf[n][1] for n in bluetooth.neighbors_index + [bluetooth.ID]]))]
 
 # Synchronized communication instances for each process
-phase_consensus = Sync(bluetooth, [phase], compute_average, 'f', process_id=0, delay=0.1)
-freq_consensus  = Sync(bluetooth, [init_freq], compute_average, 'f', process_id=1, delay=0.1)
+phase_consensus = Sync(bluetooth, [phase], compute_average, 'f', process_id=0, delay=0.5)
+freq_consensus  = Sync(bluetooth, [init_freq], compute_average, 'f', process_id=1, delay=0.5)
 
 
 if __name__ == "__main__":

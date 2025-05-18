@@ -1,10 +1,12 @@
 from collections import defaultdict
 import matplotlib.pyplot as plt
-import numpy as np
 from sklearn.linear_model import LinearRegression
+import numpy as np
+from scipy.interpolate import griddata
+from matplotlib.colors import LinearSegmentedColormap
+
 
 plt.rcParams.update({'font.size': 18})
-
 WINDOW_SIZE = 5
 
 
@@ -150,32 +152,120 @@ def show(data, cal):
         theta = np.linspace(0, 2 * np.pi, 200)
         circle_x = mean_meas[0] + bound * np.cos(theta)
         circle_y = mean_meas[1] + bound * np.sin(theta)
-        plt.plot(circle_x, circle_y, linestyle='--', color=colors[idx%len(colors)])
-        plt.plot(filtered_data[:,0], filtered_data[:,1], color=colors[idx%len(colors)])
-        plt.scatter(data_i[:,0], data_i[:,1], color='tab:grey', alpha=0.2)
-        plt.scatter(outliers[:,0], outliers[:,1], color='tab:red', alpha=0.5)
-        plt.scatter(calibrated_data[:,0], calibrated_data[:,1], color='tab:green', alpha=0.5)
-        plt.scatter(i[0], i[1], marker='2', s=300, color=colors[idx%len(colors)])
-        plt.xlabel('x')
-        plt.ylabel('y')
+        if idx == 0:
+            plt.plot(circle_x, circle_y, linestyle='--', color=colors[idx % len(colors)])
+            plt.plot(filtered_data[:, 0], filtered_data[:, 1], color=colors[idx % len(colors)])
+            plt.scatter(data_i[:, 0], data_i[:, 1], color='tab:grey', alpha=0.2, label='Measurements')
+            plt.scatter(outliers[:, 0], outliers[:, 1], color='tab:red', alpha=0.5, label='Outliers')
+            plt.scatter(calibrated_data[:, 0], calibrated_data[:, 1], color='tab:green', alpha=0.5, label='Calibrated data')
+            plt.scatter(i[0], i[1], marker='2', s=500, color=colors[idx % len(colors)])
+        else:
+            plt.plot(circle_x, circle_y, linestyle='--', color=colors[idx%len(colors)])
+            plt.plot(filtered_data[:,0], filtered_data[:,1], color=colors[idx%len(colors)])
+            plt.scatter(data_i[:,0], data_i[:,1], color='tab:grey', alpha=0.2)
+            plt.scatter(outliers[:,0], outliers[:,1], color='tab:red', alpha=0.5)
+            plt.scatter(calibrated_data[:,0], calibrated_data[:,1], color='tab:green', alpha=0.5)
+            plt.scatter(i[0], i[1], marker='2', s=500, color=colors[idx%len(colors)])
+        plt.xlabel('X (cm)')
+        plt.ylabel('Y (cm)')
 
     plt.grid()
-    plt.legend(loc='lower right')
+    plt.scatter([0, 194, 100, 50], [0, 0, 194, 100], marker='*', s=200, color='black', label='Anchors')
+    plt.legend(loc='lower center')
     plt.tight_layout()
-    plt.savefig(f'filt_{WINDOW_SIZE}.png')
+    plt.savefig(f'cal_pos.png')
     plt.show()
 
 
-def error():
+def plot_combined_errors(data, cal):
+    coords = []
+    errors_norm = []
+    raw_errors_norm = []
+    errors_ratio = []
+    cal_error = []
+    raw_error = []
+
+    filtered_data_all, outliers_all, bound_all = filter(data, WINDOW_SIZE)
+
+    for i in GT:
+        data_i = np.array(data[i])
+        mean_meas = np.mean(data_i, axis=0)
+
+        filtered_data = filtered_data_all[i]
+        calibrated_data = cal[i]
+
+        err_norm = np.linalg.norm(np.mean(calibrated_data, axis=0) - i)
+        err_filt = np.linalg.norm(np.mean(filtered_data, axis=0) - i)
+        err_ratio = (err_norm * 100) / err_filt if err_filt != 0 else 0
+
+        cal_error.append(np.mean(calibrated_data, axis=0) - i)
+        raw_error.append(np.mean(filtered_data, axis=0) - i)
+
+        coords.append(i[:2])
+        errors_norm.append(err_norm)
+        raw_errors_norm.append(err_filt)
+        errors_ratio.append(err_ratio)
+
+    coords = np.array(coords)
+    errors_norm = np.array(errors_norm)
+    raw_errors_norm = np.array(raw_errors_norm)
+    errors_ratio = np.array(errors_ratio)
+    raw_error = np.array(raw_error)
+    cal_error = np.array(cal_error)
+
+    # Interpolation grid
+    grid_x, grid_y = np.mgrid[
+        coords[:, 0].min():coords[:, 0].max():100j,
+        coords[:, 1].min():coords[:, 1].max():100j
+    ]
+
+    grid_norm = griddata(coords, errors_norm, (grid_x, grid_y), method='linear')
+    grid_ratio = griddata(coords, errors_ratio, (grid_x, grid_y), method='linear')
+
+    colors = [(0, 0.3, 1), (1, 1, 1), (1, 0.2, 0.2)]
+    cmap = LinearSegmentedColormap.from_list('custom_heatmap', colors, N=256)
+
+    fig, axs = plt.subplots(1, 2, figsize=(18, 7))
+
+    # Plot error norm
+    im0 = axs[0].imshow(grid_norm.T, extent=(
+        coords[:, 0].min(), coords[:, 0].max(),
+        coords[:, 1].min(), coords[:, 1].max()
+    ), origin='lower', cmap=cmap, aspect='auto')
+    axs[0].scatter([0, 194, 100, 50], [0, 0, 194, 100], marker='*', s=200, color='black', label='Anchors')
+    axs[0].set_xlabel('X (cm)')
+    axs[0].set_ylabel('Y (cm)')
+    axs[0].set_xlim(-6, 200)
+    axs[0].set_ylim(-6, 200)
+    axs[0].grid(True)
+    fig.colorbar(im0, ax=axs[0], label=r'Calibrated error: $e_{e,cal}$ (cm)')
+
+    # Plot error ratio
+    im1 = axs[1].imshow(grid_ratio.T, extent=(
+        coords[:, 0].min(), coords[:, 0].max(),
+        coords[:, 1].min(), coords[:, 1].max()
+    ), origin='lower', cmap=cmap, aspect='auto')
+    axs[1].scatter([0, 194, 100, 50], [0, 0, 194, 100], marker='*', s=200, color='black', label='Anchors')
+    axs[1].set_xlabel('X (cm)')
+    axs[1].set_ylabel('Y (cm)')
+    axs[1].set_xlim(-6, 200)
+    axs[1].set_ylim(-6, 200)
+    axs[1].grid(True)
+    fig.colorbar(im1, ax=axs[1], label=r'Error gain: $\frac{e_{e,cal}}{e_{e,raw}}$ (%)')
+
+    plt.tight_layout()
+    plt.savefig(f'err_pos.png')
+    plt.show()
 
 
-
-    """print("------- Statistics -------")
+    print("------- Statistics -------")
     print()
-    print(f"Mean error before calibration (cm): {np.mean(errors_raw)}")
-    print(f"RMS error before calibration (cm): {np.sqrt(np.mean(errors_raw ** 2))}")
-    print(f"Mean error after calibration(cm): {np.mean(errors_calibrated)}")
-    print(f"RMS error after calibration (cm): {np.sqrt(np.mean(errors_calibrated ** 2))} (cm)")"""
+    print(raw_errors_norm)
+    print(errors_norm)
+    print(f"Mean error before calibration (cm): {np.mean(raw_error)}")
+    print(f"RMS error before calibration (cm): {np.sqrt(np.mean(raw_error ** 2))}")
+    print(f"Mean error after calibration(cm): {np.mean(cal_error)}")
+    print(f"RMS error after calibration (cm): {np.sqrt(np.mean(cal_error ** 2))} (cm)")
 
 
 def cumulative_error(data, label, color):
@@ -204,10 +294,18 @@ GT = GT_front + GT_right + GT_left"""
 
 GT = [(25, 100), (75, 100), (100, 100), (125, 100), (150, 100), (175, 100), (200, 100),
       (50, 0), (50, 25), (50, 50), (50, 75), (50, 125), (50, 150), (50, 175),
-      (100, 150), (150, 150), (150, 50), (100, 50)
+      (100, 150), (150, 150), (150, 50), (100, 50),
+      (0, 175), (175, 175), (175, 25), (0, 25)
       ]
 data = read_data(GT, "Final/full.csv")
 
+del data[GT[6]]
+del data[GT[7]]
+del GT[6]
+del GT[6]
+
+print(data)
+print(GT)
 
 d = (125,100)
 #histogram(d, data)
@@ -219,10 +317,13 @@ A, b, y_pred = compute_model(filtered_data)
 
 calibrated_data = calibrate(filtered_data, A, b)
 show(data, calibrated_data)
+#cal_error(calibrated_data)
+plot_combined_errors(data, calibrated_data)
 
 plt.figure(figsize=(10, 6))
-cumulative_error(data, "Before processing", 'tab:blue')
-cumulative_error(calibrated_data, "After processing", 'tab:orange')
+cumulative_error(data, "Without processing", 'tab:blue')
+cumulative_error(calibrated_data, "With processing", 'tab:orange')
 plt.grid()
 plt.legend()
+plt.savefig("cumul_pos.png")
 plt.show()

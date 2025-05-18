@@ -3,7 +3,7 @@ import os
 from matplotlib.patches import Circle, ConnectionPatch
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import glob
-plt.rcParams.update({'font.size': 14})
+plt.rcParams.update({'font.size': 18})
 
 
 n = 30  # Number of iterations

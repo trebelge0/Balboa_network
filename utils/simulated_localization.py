@@ -7,7 +7,7 @@ Romain Englebert - Master's Thesis
 import numpy as np
 import matplotlib.pyplot as plt
 import random
-plt.rcParams.update({'font.size': 12})
+plt.rcParams.update({'font.size': 14})
 
 
 def initialize_neighbors(m):
@@ -32,9 +32,9 @@ IPS = ["192.168.164.86",
        "192.168.164.55"]
 
 
-agents_position = [[-0.91, 0.3], [2.67, 0.12], [1.63, 2.59]]
-anchor_position = [[0.0, 0.0], [4.06, 2.77], [5.01, 0.0], [-1.32, 1.98]]
-target_position = [2.38, 2.6]
+agents_position = [[50, 150], [100, 50], [150, 150]]
+anchor_position = [[0.0, 0.0], [197, 0], [100, 194]]
+target_position = [50, 100]
 agents_distance = []  # Actual distances between target and each agent
 
 d = ''
@@ -54,7 +54,7 @@ ADJACENCY = [[1, 1, 0],
 
 NEIGHBORS_INDEX = initialize_neighbors(ADJACENCY)
 
-T = 500  # Iterations
+T = 2000  # Iterations
 
 state = np.zeros((T+1, len(ADJACENCY), 6))  # [x1, x2, z1, z2, g1, g2]
 gradient = np.zeros((len(ADJACENCY), T))  # For plot
@@ -62,12 +62,12 @@ f = np.zeros((len(ADJACENCY), T))  # For plot (cost function)
 y = np.zeros((len(ADJACENCY), T))  # For plot
 x = np.zeros((len(ADJACENCY), T))  # For plot
 
-gamma = 2e-3  # Step
+gamma = 5e-7  # Step
 
 # --------- Model of the time averaged error ----------
 # This will lead to a static error at the end
 
-RMS_dist_error = 0.1  # RMS error of measurements over distance (not time)
+"""RMS_dist_error = 0.1  # RMS error of measurements over distance (not time)
 for i in range(len(agents_distance)):
     cal_error = random.uniform(-0.1, 0.1)  # Calibration model error because different calibration over each device
     agents_distance[i] += random.gauss(cal_error, RMS_dist_error)
@@ -77,7 +77,7 @@ RMS_pos_error = 0.0  # RMS error of position over distance due to the RMS_dist_e
 for i in range(len(agents_position)):
     anchor_pos_error = random.uniform(-0.0, 0.0)  # Positioning error of the anchors
     agents_position[i][0] += random.gauss(anchor_pos_error, RMS_pos_error)
-    agents_position[i][1] += random.gauss(anchor_pos_error, RMS_pos_error)
+    agents_position[i][1] += random.gauss(anchor_pos_error, RMS_pos_error)"""
 
 
 for t in range(T):
@@ -89,11 +89,11 @@ for t in range(T):
 
         # Time variation of measures
         # Every 30 iteration, a new measure is performed
-        if t%30 == 0:
+        """if t%30 == 0:
             RMS_time_dist = 0.001 + 0.001*distance
             distance += random.gauss(0, RMS_time_dist)
             position[0] += random.gauss(0, RMS_time_dist)
-            position[1] += random.gauss(0, RMS_time_dist)
+            position[1] += random.gauss(0, RMS_time_dist)"""
 
 
         xi_t = np.array(state[t][n][0:2])

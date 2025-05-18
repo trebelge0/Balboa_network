@@ -59,7 +59,7 @@ rocky = Balboa()
 compute_average = lambda buf: [float(np.mean([buf[n][1] for n in bluetooth.neighbors_index + [bluetooth.ID]]))]
 
 # Synchronized communication instance
-consensus = Sync(bluetooth, [init_state], compute_average, 'f', delay=1.5)
+consensus = Sync(bluetooth, [init_state], compute_average, 'f', delay=2.0)
 
 
 # ------- Main --------

@@ -35,13 +35,14 @@ target_position = [1, 0]
 ./fetch_csv.sh synchro_freq.csv 192.168.250.86 192.168.250.122 192.168.250.55
 ./fetch_csv.sh synchro_phase.csv 192.168.250.86 192.168.250.122 192.168.250
 
-192.168.250.86 192.168.250.107 192.168.250.122 192.168.250.55 192.168.3.66
+192.168.250.86 192.168.250.107 192.168.250.122 192.168.250.55 192.168.250.66
 ./deploy.sh 192.168.250.86 192.168.250.107 192.168.250.122 192.168.250.55 192.168.250.66
 ./run.sh /home/trebelge/Documents/Balboa_Network/Examples/standup.py 192.168.250.86 192.168.250.107 192.168.250.122 192.168.250.55 192.168.250.66
 ./fetch_csv.sh standup.csv 192.168.250.86 192.168.250.107 192.168.250.122 192.168.250.55 192.168.250.66
 ./command.sh "sudo shutdown -h now" 192.168.250.86 192.168.250.107 192.168.250.122 192.168.250.55 192.168.3.66
 
-./deploy.sh 192.168.205.55
-./run.sh /home/trebelge/Documents/Balboa_Network/Performances/sample_dwm.py 192.168.205.55
-./run.sh /home/trebelge/Documents/Balboa_Network/Examples/localize_target.py 192.168.205.55
-./fetch_csv.sh distance.csv 192.168.205.55
+./deploy.sh 192.168.54.86 192.168.54.107 192.168.54.122 192.168.54.55 192.168.54.66 192.168.54.45
+./run.sh /home/trebelge/Documents/Balboa_Network/Examples/synchro.py 192.168.54.86:0.5 192.168.54.107:1 192.168.54.122:2 192.168.54.55:3 192.168.54.66:4 192.168.54.45:5
+./run.sh /home/trebelge/Documents/Balboa_Network/Examples/synchro.py 192.168.54.86:0.25 192.168.54.107:0.5 192.168.54.122:0.75 192.168.54.55:1 192.168.54.66:1.25 192.168.54.45:1.5
+./fetch_csv.sh synchro_phase.csv 192.168.54.86 192.168.54.107 192.168.54.122 192.168.54.55 192.168.54.66
+./fetch_csv.sh synchro_freq.csv 192.168.54.86 192.168.54.107 192.168.54.122 192.168.54.55 192.168.54.66

@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-plt.rcParams.update({'font.size': 16})
+plt.rcParams.update({'font.size': 18})
 
 
 # Puissance consommée par chaque composant (en watts)
@@ -9,7 +9,7 @@ components.reverse()
 power_values.reverse()
 colors = ['tab:blue', 'tab:green', 'tab:orange', 'tab:red']
 
-fig, ax = plt.subplots(figsize=(6, 5))
+fig, ax = plt.subplots(figsize=(6, 6))
 
 # Empilement
 bottom = 0

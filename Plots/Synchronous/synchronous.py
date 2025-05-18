@@ -5,7 +5,7 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import glob
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import matplotlib.image as mpimg
-plt.rcParams.update({'font.size': 14})
+plt.rcParams.update({'font.size': 18})
 
 
 n = 30  # Number of iterations
@@ -141,5 +141,5 @@ plt.tight_layout()
 if plot_start:
     plt.savefig("lin_time_start.png")
 else:
-    plt.savefig("lin_time.png")
+    plt.savefig("synchro_it.png")
 plt.show()

@@ -55,7 +55,7 @@ ANGLE_RESPONSE = 7
 # forwards.  When this constant is adjusted properly, the robot
 # will no longer zoom off in one direction, but it will drive
 # back and forth a few times before falling down.
-DISTANCE_RESPONSE = 70
+DISTANCE_RESPONSE = 60
 
 
 # DISTANCE_DIFF_RESPONSE determines the response to differences

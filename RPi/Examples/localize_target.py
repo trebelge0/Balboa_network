@@ -22,6 +22,7 @@ import oled
 from balboa import Balboa
 from bluetooth import Bluetooth
 from synchronous import Sync
+from balance import Balancer
 from dwm1001 import DWM
 from utils import RPIS_MACS, ADJACENCY, check_args, signal_handler
 
@@ -74,9 +75,11 @@ ID = int(check_args(1)[0])
 bluetooth = Bluetooth(ID, RPIS_MACS, ADJACENCY, verbose=False)
 rocky = Balboa()
 
+balancer = Balancer()
+
 # Localization sensor
-GAMMA = 4e-3  # step size for gradient descent
-dwm = DWM(rocky, verbose=False)
+GAMMA = 5e-7  # step size for gradient descent
+dwm = DWM(rocky, verbose=False, window_size=100)
 
 
 # ------- Main --------
@@ -84,12 +87,14 @@ dwm = DWM(rocky, verbose=False)
 if __name__ == "__main__":
 
     # When red led shutdown, RPi connected with its neighbors
-    #rocky.leds(1, 0, 0)
-    #bluetooth.start_network()  # Wait for each neighbor to be connected
-    #rocky.leds(0, 0, 0)
+    rocky.leds(1, 0, 0)
+    bluetooth.start_network()  # Wait for each neighbor to be connected
+    balancer.setup()
+    balancer.start()  # Run balancer thread
+    rocky.leds(0, 0, 0)
 
     # Localization
-    localize = Sync(bluetooth, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0], gradient_descent, 'ffffff', delay=5e-1)
+    localize = Sync(bluetooth, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0], gradient_descent, 'ffffff', delay=0.5)
 
     #sp = serial.Serial("/dev/serial0", 115200, timeout=1)
 
@@ -98,10 +103,12 @@ if __name__ == "__main__":
     dwm.read()
     dwm.postprocess()
 
+    while not balancer.balancing:
+        continue
+
     # Run synchronized communication over localization
     #localize_thread = threading.Thread(target=localize.run, daemon=True)
     #localize_thread.start()
-    #rocky.motors(200,200)
 
     while True:
 

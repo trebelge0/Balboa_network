@@ -1,0 +1,3 @@
+gamma = 1e-6
+delay = 1e-1
+WS = 30

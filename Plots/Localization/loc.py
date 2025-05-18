@@ -7,16 +7,16 @@ plt.rcParams.update({'font.size': 12})
 
 n = 500  # Number of iterations
 plot_time = True
-plot_start = True
-actual_x = 2.38
-actual_y = 2.6
+plot_start = False
+actual_x = 50
+actual_y = 100
 
-csv_files = glob.glob(os.path.join('../data/', "*.csv"))
+csv_files = glob.glob(os.path.join('Final/test_5', "*.csv"))
 # Check
 if not csv_files:
     print("Aucun fichier CSV trouvé dans le dossier.")
     exit()
-
+csv_files.sort()
 
 start_time = 999999999999999999
 last_start_time = 0
@@ -55,11 +55,13 @@ for file_path in csv_files:
         for line in f:
             if line.strip():
                 elem = line.split(",")
+                print(elem)
                 time.append(float(elem[0]) - start_time)
                 try:
-                    cost.append(float(elem[7]))
-                    x.append(float(elem[1]))
-                    y.append(float(elem[2]))
+                    if float(elem[7]) != 1.0:
+                        cost.append(float(elem[8]))
+                        x.append(float(elem[1]))
+                        y.append(float(elem[2]))
                 except:
                     continue
 
@@ -101,6 +103,6 @@ else:
 
 plt.show()
 
-print(f'x error: {abs(x[-1]-actual_x)*100} cm')
-print(f'y error: {abs(y[-1]-actual_y)*100} cm')
-print(f'Distance from actual target: {np.sqrt((y[-1]-actual_y)**2+(x[-1]-actual_x)**2)*100} cm')
+print(f'x error: {abs(x[-1]-actual_x)} cm')
+print(f'y error: {abs(y[-1]-actual_y)} cm')
+print(f'Distance from actual target: {np.sqrt((y[-1]-actual_y)**2+(x[-1]-actual_x)**2)} cm')

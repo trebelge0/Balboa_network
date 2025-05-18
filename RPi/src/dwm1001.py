@@ -36,7 +36,7 @@ class DWM:
         self.distance = 0
         self.position = 0
 
-        self.WINDOW = window_size  # Number of measures kept for postprocessing
+        self.WINDOW = window_size  # Number of measures kept for moving average filtering
         self.VERBOSE = verbose
 
 
@@ -78,8 +78,8 @@ class DWM:
         d = np.mean(distances)
 
         # Calibrate distances
-        a = 0.94
-        b = -6.5
+        a = 0.9469764536578285
+        b = -5.96484910568
         self.distance = a * d + b
 
         # Filter position
@@ -94,13 +94,9 @@ class DWM:
         pos_meas = np.mean(pos_meas, axis=0)
 
         # Calibrate position
-        A = np.array([np.array([0.788, -0.0129]),
-             np.array([0.0321, 0.9356])])
-        b = np.array([28.5, -4.35])
-
-        print(A)
-        print(pos_meas)
-        print(b)
+        A = np.array([np.array([ 0.93538932,  0.00353817]),
+                      np.array([-0.01071457,  0.94470965])])
+        b = np.array([4.6239576, 5.0861534])
 
         self.position = (A @ pos_meas.T).T + b
 

@@ -3,7 +3,7 @@ import matplotlib.patches as mpatches
 import os
 import glob
 
-plt.rcParams.update({'font.size': 12})
+plt.rcParams.update({'font.size': 16})
 
 # === 1. Lire tous les fichiers CSV ===
 csv_files = glob.glob(os.path.join('REC_loop_4/', "*.csv"))
