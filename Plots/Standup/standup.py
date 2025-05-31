@@ -3,7 +3,16 @@ import matplotlib.patches as mpatches
 import os
 import glob
 
-plt.rcParams.update({'font.size': 16})
+plt.rcParams.update({'font.size': 14})
+
+
+"""
+* Master's Thesis *
+Implementation of a robotic swarm platform
+based on the Balboa self-balancing robot
+© 2025 Romain Englebert
+"""
+
 
 # === 1. Lire tous les fichiers CSV ===
 csv_files = glob.glob(os.path.join('./', "*.csv"))
@@ -54,7 +63,7 @@ for file_path in csv_files:
 start_time = first_change_time
 
 # === 3. Plot de la timeline ===
-fig, ax = plt.subplots(figsize=(7, 0.8 * len(events_agents)))
+fig, ax = plt.subplots(figsize=(6, 0.8 * len(events_agents)))
 colors = {0: "lightcoral", 1: "mediumseagreen"}
 
 # Tri par ID croissant pour cohérence

@@ -5,6 +5,14 @@ import glob
 plt.rcParams.update({'font.size': 12})
 
 
+"""
+* Master's Thesis *
+Implementation of a robotic swarm platform
+based on the Balboa self-balancing robot
+© 2025 Romain Englebert
+"""
+
+
 actual_x = 2.38
 actual_y = 2.6
 

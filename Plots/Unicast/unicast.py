@@ -5,7 +5,15 @@ import glob
 
 plt.rcParams.update({'font.size': 16})
 
-# === 1. Lire tous les fichiers CSV ===
+
+"""
+* Master's Thesis *
+Implementation of a robotic swarm platform
+based on the Balboa self-balancing robot
+© 2025 Romain Englebert
+"""
+
+
 csv_files = glob.glob(os.path.join('REC_loop_4/', "*.csv"))
 
 if not csv_files:
@@ -23,7 +31,6 @@ drift_compensator[2] = 0
 drift_compensator[3] = -0.03
 drift_compensator[4] = 0
 
-# === 2. Lire les données et détecter le temps de début global ===
 for file_path in csv_files:
     timestamps = []
     states = []
@@ -49,18 +56,15 @@ for file_path in csv_files:
         state = states[i]
         events.append((start, duration, state))
 
-    # Ajouter le dernier état avec une durée arbitraire de 1s
     events.append((timestamps[-1], 5.0, states[-1]))
 
     events_agents.append(events)
 
 start_time = first_change_time
 
-# === 3. Plot de la timeline ===
 fig, ax = plt.subplots(figsize=(8, 0.8 * len(events_agents)))
 colors = {0: "lightcoral", 1: "mediumseagreen"}
 
-# Tri par ID croissant pour cohérence
 sorted_indices = sorted(range(len(agent_ids)), key=lambda i: agent_ids[i])
 agent_ids = [agent_ids[i] for i in sorted_indices]
 events_agents = [events_agents[i] for i in sorted_indices]
@@ -84,7 +88,6 @@ ax.set_yticklabels([f"RPi {aid}" for aid in agent_ids])
 ax.set_xlabel("Time (s)")
 ax.grid(True, axis='x', linestyle='--', alpha=0.4)
 
-# Légende
 ready_patch = mpatches.Patch(color="mediumseagreen", label="Ready")
 not_ready_patch = mpatches.Patch(color="lightcoral", label="Busy")
 ax.legend(handles=[not_ready_patch, ready_patch], loc="upper left")

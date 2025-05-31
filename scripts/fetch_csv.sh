@@ -1,6 +1,12 @@
 #!/bin/bash
 
 
+# * Master's Thesis *
+# Implementation of a robotic swarm platform
+# based on the Balboa self-balancing robot
+# © 2025 Romain Englebert
+
+
 # Check if csv file is specified
 if [ -z "$1" ]; then
     echo "Usage: $0 <file.csv <IP1>:<param1>,<param2>,... <IP2>:<param1>,<param2>,..."

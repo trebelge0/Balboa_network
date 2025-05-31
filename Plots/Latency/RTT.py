@@ -3,6 +3,15 @@ import numpy as np
 import csv
 plt.rcParams.update({'font.size': 19})
 
+
+"""
+* Master's Thesis *
+Implementation of a robotic swarm platform
+based on the Balboa self-balancing robot
+© 2025 Romain Englebert
+"""
+
+
 packet_size = 200  # en bytes
 
 filename = f'RTT{packet_size}.csv'

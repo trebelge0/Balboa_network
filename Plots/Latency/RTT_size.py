@@ -2,6 +2,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 plt.rcParams.update({'font.size': 19})
 
+
+"""
+* Master's Thesis *
+Implementation of a robotic swarm platform
+based on the Balboa self-balancing robot
+© 2025 Romain Englebert
+"""
+
 # Données
 rtt_by_size = {
     50: 59.3304,

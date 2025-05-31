@@ -4,8 +4,10 @@
 #include <Arduino.h>
 #include <HardwareSerial.h>
 
-#define SERIAL_PORT Serial1 // Modifier si besoin
+#define SERIAL_PORT Serial1
 #define BAUD_RATE 115200
+
+/* The code is originally from Polulu, and has been modified by Romain Englebert*/
 
 /* This example program shows how to make the Balboa 32U4 balancing
  * robot into a Raspberry Pi I2C slave.  The RPi and Balboa can

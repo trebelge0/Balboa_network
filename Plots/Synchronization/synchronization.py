@@ -5,6 +5,14 @@ import glob
 plt.rcParams.update({'font.size': 18})
 
 
+"""
+* Master's Thesis *
+Implementation of a robotic swarm platform
+based on the Balboa self-balancing robot
+© 2025 Romain Englebert
+"""
+
+
 def mean_interval(timestamps):
     """Calcule l'intervalle moyen entre les timestamps."""
     if len(timestamps) < 2:
@@ -50,18 +58,14 @@ def get_start_and_last_time(file_list):
 
 
 # Paramètres
-n_iterations = 22
-folder_name = "Final/Last_1"
+n_iterations = 200
+folder_name = "loop_3"
 subdirs = ["frequency", "phase"]
 axis_labels = ["Frequency [Hz]", "Phase [s]"]
 
 # Chargement des fichiers
 csv_paths = [sorted(glob.glob(os.path.join(folder_name, subdir, "*.csv")), reverse=True)
              for subdir in subdirs]
-
-if not all(csv_paths):
-    print("Certains fichiers CSV sont manquants.")
-    exit()
 
 # Création des subplots
 fig, axs = plt.subplots(2, 1, figsize=(8, 12), sharex=True)
@@ -102,5 +106,5 @@ for i, (file_list, label) in enumerate(zip(csv_paths, axis_labels)):
 
 axs[1].set_xlabel("Time [s]")
 plt.tight_layout()
-plt.savefig(f"sync_expe.png")
+plt.savefig(f"sync_expe_.png")
 plt.show()

@@ -4,6 +4,15 @@ import matplotlib.animation as animation
 import glob
 plt.rcParams.update({'font.size': 12})
 
+
+"""
+* Master's Thesis *
+Implementation of a robotic swarm platform
+based on the Balboa self-balancing robot
+© 2025 Romain Englebert
+"""
+
+
 name = "loop_3"
 
 csv_freq = glob.glob(os.path.join(f'{name}/frequency', "*.csv"))

@@ -8,6 +8,14 @@ import matplotlib.image as mpimg
 plt.rcParams.update({'font.size': 18})
 
 
+"""
+* Master's Thesis *
+Implementation of a robotic swarm platform
+based on the Balboa self-balancing robot
+© 2025 Romain Englebert
+"""
+
+
 n = 30  # Number of iterations
 plot_start = False
 
@@ -85,15 +93,15 @@ for file_path in csv_files:
     if not plot_start:
         ax.set_xlim((last_start_time - start_time-1, time[n]))
 
-    zoom_time.append(time[11:16])
-    zoom_values.append(values[11:16])
-    zoom_ack.append(ack[11:16])
-    zoom_tack.append(tack[11:16])
+    zoom_time.append(time[12:16])
+    zoom_values.append(values[12:16])
+    zoom_ack.append(ack[12:16])
+    zoom_tack.append(tack[12:16])
 
 # Coordonnées à zoomer
-x1, x2 = 8.2, 9.2
+x1, x2 = 8.5, 9.4
 y1, y2 = 11.8, 14.2
-zoom_center = (10.3, 11.7)
+zoom_center = (8.9, 13)
 
 
 
@@ -106,7 +114,7 @@ con = ConnectionPatch(xyA=(0.2, 1.08), coordsA=axins.transAxes,
                       xyB=zoom_center, coordsB=ax.transData,
                       arrowstyle="->", color="grey", lw=1.5)
 fig.add_artist(con)
-con = ConnectionPatch(xyA=(0.3, -0.12), coordsA=axins.transAxes,
+con = ConnectionPatch(xyA=(0.15, -0.05), coordsA=axins.transAxes,
                       xyB=zoom_center, coordsB=ax.transData,
                       arrowstyle="->", color="grey", lw=1.5)
 fig.add_artist(con)

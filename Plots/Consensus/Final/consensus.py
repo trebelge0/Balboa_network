@@ -5,8 +5,15 @@ import glob
 plt.rcParams.update({'font.size': 18})
 
 
+"""
+* Master's Thesis *
+Implementation of a robotic swarm platform
+based on the Balboa self-balancing robot
+© 2025 Romain Englebert
+"""
+
+
 def mean_interval(times):
-    """Retourne l'intervalle moyen entre les éléments d'une liste."""
     if len(times) < 2:
         return 0.0
     intervals = [t2 - t1 for t1, t2 in zip(times[:-1], times[1:])]
@@ -14,7 +21,6 @@ def mean_interval(times):
 
 
 def find_csv_files(folder):
-    """Récupère et trie les fichiers CSV dans un dossier."""
     files = glob.glob(os.path.join(folder.strip(), "*.csv"))
     files.sort(reverse=True)
     if not files:
@@ -24,7 +30,6 @@ def find_csv_files(folder):
 
 
 def get_time_bounds(files):
-    """Trouve le temps de début et de fin pour tous les fichiers."""
     start_time = float('inf')
     last_start_time = 0
 
@@ -43,7 +48,6 @@ def get_time_bounds(files):
 
 
 def parse_csv(file_path, start_time, max_iter):
-    """Extrait les temps et valeurs depuis un fichier CSV."""
     time, values = [], []
     iter_time_map = {}
     with open(file_path, "r") as f:
@@ -60,7 +64,6 @@ def parse_csv(file_path, start_time, max_iter):
 
 
 def plot_data(files, n, name, plot_time=True, plot_start=True):
-    """Génère et sauvegarde la figure à partir des fichiers CSV."""
     start_time, last_start_time = get_time_bounds(files)
 
     fig, ax = plt.subplots(figsize=(8, 6))
@@ -81,18 +84,16 @@ def plot_data(files, n, name, plot_time=True, plot_start=True):
         last_time = time
         last_values = values
 
-    # Axe inférieur (temps ou itération)
     if plot_time:
         ax.set_xlabel("Time [s]")
         ax.set_ylabel("State")
         ax.set_xlim(0, 100)
         ax.grid(True)
 
-        # Axe supérieur : itérations
         ax2 = ax.twiny()
         ticks = list(all_iter_time.values())
         labels = list(all_iter_time.keys())
-        step = max(1, len(labels) // 5)
+        step = max(1, len(labels) // 10)
         ax2.set_xticks(ticks[::step])
         ax2.set_xticklabels(labels[::step])
         ax2.set_xlabel("Iteration")
@@ -104,26 +105,23 @@ def plot_data(files, n, name, plot_time=True, plot_start=True):
         ax.set_xlabel("Iteration")
         ax.set_ylabel("Value")
 
-    ax.legend(loc='upper right')
+    ax.legend(loc='upper right', fontsize=14)
     fig.tight_layout()
 
-    suffix = "_time_start" if plot_time and plot_start else "_time" if plot_time else "_it"
-    fig.savefig(f"{name.strip()}{suffix}.png")
+    fig.savefig(f"cons_loop.png")
     plt.show()
 
     # === PRINTS ===
-    print(mean_interval(last_time[2:]))               # Moyenne des intervalles
-    print(last_start_time - start_time)               # Temps entre le 3e et 1er point de chaque fichier
-    print(last_values[-1] if last_values else None)   # Dernière valeur lue
-    print()                                           # Ligne vide
+    print(mean_interval(last_time[2:]))
+    print(last_start_time - start_time)
+    print(last_values[-1] if last_values else None)
+    print()
 
 
-# === PARAMÈTRES ===
 n = 100
 plot_time = True
 plot_start = True
 name = "loop"
 
-# === LANCEMENT ===
 csv_files = find_csv_files(name)
 plot_data(csv_files, n, name, plot_time, plot_start)

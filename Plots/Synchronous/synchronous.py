@@ -8,6 +8,14 @@ import matplotlib.image as mpimg
 plt.rcParams.update({'font.size': 18})
 
 
+"""
+* Master's Thesis *
+Implementation of a robotic swarm platform
+based on the Balboa self-balancing robot
+© 2025 Romain Englebert
+"""
+
+
 n = 30  # Number of iterations
 plot_start = False
 
@@ -47,7 +55,7 @@ zoom_ack = []
 zoom_tack = []
 
 j = 0
-colors = ['#1f77b4',  # Bleu classique (primary)
+colors = ['#1f77b4',  # Bleu classique
           '#9467bd',   # Violet doux
           '#ff7f0e',  # Orange doux
           '#2ca02c',  # Vert équilibré
@@ -90,14 +98,12 @@ for file_path in csv_files:
     zoom_ack.append(ack[6:10])
     zoom_tack.append(tack[6:10])
 
-# Coordonnées à zoomer
 x1, x2 = 11.5, 12.2
 y1, y2 = 5.5, 8.5
 zoom_center = (11.85, 7.0)
 
 
 
-# Ajouter l'inset (zoom) en bas à droite
 axins = inset_axes(ax, width=2.4, height=2.4, loc='lower right',
                    bbox_to_anchor=(0.95, 0.1),  # position manuelle
                    bbox_transform=ax.transAxes, borderpad=0)

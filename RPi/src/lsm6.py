@@ -1,6 +1,7 @@
 import smbus
 import struct
 import collections
+# Copyright Pololu Corporation.  For more information, see https://www.pololu.com/
 
 class Regs(object):
   CTRL1_XL    = 0x10

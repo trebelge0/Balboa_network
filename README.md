@@ -1,30 +1,34 @@
 # Robotic swarm platform based on the Balboa self-balancing robot
 
+<p align="center">
+  <img src="Images/RPi0-Balboa_white_white.JPG" alt="RPi0-Balboa.py" width="200"/>
+</p>
+
 This repository contains a communication platform within a Balboa swarm. 
 A RPi is shielded on each Balboa.
 There are two communication protocols used in it:
 * I²C communication between RPi and Balboa
-* Bluetooth communication within a RPi graph
+* Bluetooth communication within a RPi mesh
 
 The agents are equipped with Decawave DWM1001 UWB modules allowing them to measure their position and distances with anchors.
 
-<p align="center">
-  <img src="images/hardware.jpeg" alt="hardware.py" width="600"/>
-</p>
-
 ## Table of Contents
 
+- [Repository structure](#repository-structure)
 - [System, communication & peripherals](#system-communication--peripherals)
   - [RPi - Balboa Communication: I²C](#rpi---balboa-communication-i²c)
-    - [balboa.py](#balboapy)
-    - [lsm6.py](#lsm6py)
-    - [balance.py](#balancepy)
+    - [Balboa](#balboapy)
+    - [IMU](#lsm6py)
+    - [Balance](#balancepy)
   - [RPi Network communication: Bluetooth](#rpi-network-communication-bluetooth)
-    - [bluetooth.py](#bluetoothpy)
-    - [synchronous.py](#synchronouspy)
-    - [asynchronous.py](#asynchronouspy)
+    - [Bluetooth](#bluetoothpy)
+    - [Serialization](#serialization)
+    - [Synchronous](#synchronouspy)
+    - [Asynchronous](#asynchronouspy)
+    - [Flooding](#floodingpy)
+    - [Multi-Hop Unicast](#unicastpy)
   - [Decawave DWM1001 - UWB position/distance sensing](#decawave-dwm1001---uwb-positiondistance-sensing)
-    - [dwm1001.py](#dwm1001py)
+    - [DWM](#dwm1001py)
   - [Balboa (Arduino)](#balboa-arduino)
     - [BalboaRPiSlave.ino](#balboarpislaveino)
 - [Setup & configuration](#setup--configuration)
@@ -45,13 +49,38 @@ The agents are equipped with Decawave DWM1001 UWB modules allowing them to measu
   - [fetch_csv.sh](#fetchsh)
   - [command.sh](#commandsh)
 
+## Repository structure
+
+* **Arduino**: contains the source code of the ATMega32U4 of the Balboa.
+* **Images**: contains images from the readme, but also some other stuffs.
+* **Plots**: contains the source code of the plots, which are based on the data aquired by the fetch script (see Scripts section).
+* **RPi**: contains the source code of the Raspberry Pi:
+  * **data**: has to exist on the RPis for them to store their data.
+  * **Examples**: contains application-layer source codes.
+  * **Performances**: contains application-layer source code for performance measurement (I²C speed, RTT, DWM calibration tool, etc).
+  * **src**: contains all the code below the application layer (main code).
+    * **utils.py**: contains the configuration of agents (mesh, MAC) and functions for agents to store data and interface with the deployment scripts.
+* **Scripts**: contains the developed deployment system, based on ssh (see section Scripts).
+* **utils**: contains all simulations for consensus, target collaborative localization, flooding, unicast.
+
 ## System, communication & peripherals
 
+The whole system's software and hardware are in the two Figures below.
+
 <p align="center">
-  <img src="images/Software.jpeg" alt="software" width="1400"/>
+  <img src="Images/Software.jpeg" alt="software" width="3000"/>
+</p>
+
+<p align="center">
+  <img src="Images/Hardware.jpeg" alt="Hardware.py" width="400"/>
 </p>
 
 ### RPi - Balboa Communication: I²C
+
+<p align="center">
+  <img src="Images/I2C.jpeg" alt="i2c.py" width="400"/>
+</p>
+
 The RPi is connected to the 3.3V side of the bus, all other devices are connected to 5V side
 The master is the RPi, it has 4 slaves:
 * Balboa 
@@ -59,9 +88,11 @@ The master is the RPi, it has 4 slaves:
 * OLED screen 
 * Magnetometer (not used)
 
-The Balboa manage encoders and push button reading, leds setting and Decawave DWM1001 readings.
+The Balboa manages encoders and push button reading, leds setting and Decawave DWM1001 readings. The RPi can request/set these values from/on the Balboa via the I²C bus.
 
-The RPi manages the control loop with IMU readings by requesting information from Balboa via I²C.
+The RPi manages the control loop with IMU readings.
+
+This part is based on the I²C library from Polulu https://github.com/pololu/pololu-rpi-slave-arduino-library/tree/balboa/pi.
 
 #### balboa.py
 Class that allows RPi to request/write information from/to Balboa using I²C communication such as:
@@ -82,6 +113,11 @@ Class that allows RPi to request information from IMU using I²C communication s
 Run control algorithm in a separate thread.
 
 ### RPi Network communication: Bluetooth
+
+<p align="center">
+  <img src="Images/Stack.jpeg" alt="Bluetooth.py" width="500"/>
+</p>
+
 #### bluetooth.py
 Class that allows RPi's to communicate between them providing:
 * **RPi's MAC address list**
@@ -89,7 +125,7 @@ Class that allows RPi's to communicate between them providing:
 * **Adjacency matrix**: Symmetric square matrix containing edges in the RPi's graph.
 
 <p align="center">
-  <img src="images/bluetooth.jpeg" alt="bluetooth.py" width="600"/>
+  <img src="Images/Bluetooth.jpeg" alt="Bluetooth.py" width="600"/>
 </p>
 
 Two steps are performed, after having successfully setup devices beforehand as explained in the next section.
@@ -100,68 +136,95 @@ Two steps are performed, after having successfully setup devices beforehand as e
 * As soon as a connection is made, a thread is listening incoming messages for this connection.
 
 **2. Communication**
-* **Bidirectionnal**
+* Bidirectionnal
 * *send_message(self, type, \*args)* send args converted in hexadecimal based on the specified type following the *struct* library.
 * *handle_client(self, conn, addr)* is run by a separate thread for each connection. For example if a RPi is connected to 3 other RPi,
 there will be 3 (pseudo) threads running this function.
 * Several processes can use the same bluetooth instance with its connections by using process id.
 * Last message of process i is stored in *bluetooth.buffer[i]* in hexadecimal format. This buffer has length corresponding to *bluetooth.RPI_MACS*.
 
+#### Serialization
+
+The binary data received in the Bluetooth() stage has to be deserialized into interpretable data. This is done through the following scheme, based on *struct* library.
+
+<p align="center">
+  <img src="Images/Reception.jpeg" alt="serialization" width="1000"/>
+</p>
+
 #### synchronous.py
 Class that enable a synchronous communication within the graph.
+
+<p align="center">
+  <img src="Images/Sync.jpeg" alt="synchronous.py" width="250"/>
+</p>
 
 It includes a buffer that is composed of decoded values from *bluetooth.buffer* (using a specified structure of types).
 
 The iteration timing is controlled using:
-* Acknowledgement loop: avoid to skip any iteration by sending message before every neighbors read the previous one.
-* Iteration loop: wait for each neighbor current state before computing the next state.
+* **Acknowledgement loop**: avoid to skip any iteration by sending message before every neighbors read the previous one.
+* **Iteration loop**: wait for each neighbor current state before computing the next state.
 
 An acknowledgement is then sent after each state reading but a small delay is needed to avoid sending ackowledgement too fast after the message, it would corrupt the communication. If you get timeout error, it is probably due to this delay that need to be increased.
 
 This synchronization process enables it to run iterative algorithm in a distributed way.
 
-<p align="center">
-  <img src="images/Sync.jpeg" alt="synchronous.py" width="300"/>
-</p>
-
 #### asynchronous.py
 Class that enable an asynchronous communication within the graph.
+
+<p align="center">
+  <img src="Images/Async.jpeg" alt="asynchronous.py" width="250"/>
+</p>
 
 It includes a buffer that is composed of decoded values from *bluetooth.buffer* (using a specified structure of types).
 
 Each (delay) seconds, it will send a message and compute the next one based on neighbors messages and its own state.
 It can also execute any function each iteration.
 
+#### flooding.py
+
+Flooding propagates data through the mesh. It uses a specific data structure: *BroadcastMessage*.
 <p align="center">
-  <img src="images/Async.jpeg" alt="asynchronous.py" width="300"/>
+  <img src="Images/Flooding.jpeg" alt="Flooding.py" width="300"/>
+</p>
+
+#### unicast.py
+
+Multi-hop unicast searches for the shortest path to reach its destination through a BFS algorithm. It uses a specific data structure: *UnicastMessage*.
+<p align="center">
+  <img src="Images/Unicast.jpeg" alt="Unicast.py" width="300"/>
 </p>
 
 ### Decawave DWM1001 - UWB position/distance sensing
 This module can be set as a tag or an anchor
-* Attached to agents: tags (position to be measured)
-* Balises: anchors (known position to perform triangulation)
-* Target: anchor (unknown position, tags can measure their distance between them and the target)
-This module is equipped with a SPI/UART/embedded API allowing to communicate with the antenna
-* We use UART with the Balboa TX/RX
+* Tags (position to be measured, attached to each robot)
+* Anchors (known position to perform triangulation)
+
+<p align="center">
+  <img src="Images/anchor_white.JPG" alt="anchor.py" width="150"/>
+</p>
+
+For target localization application, the target is an anchor (unknown position, tags can measure their distance between them and the target)
+
+The module is equipped with a SPI/UART/embedded API allowing to communicate with the antenna. We use UART with the Balboa TX/RX
 
 #### dwm1001.py
 
-This class allow the communication with DWM either by using RPi with the DWM connected on TX/RX from the RPi, or by reading the measures over I²C from the Balboa with the DWM connected on the TX/RX from the Balboa.
+This class reads the measures over I²C from the Balboa with the DWM connected through the TX/RX of the Balboa.
 
 <p align="center">
-  <img src="images/dwm.jpeg" alt="dwm.py" width="300"/>
+  <img src="Images/dwm.jpeg" alt="dwm.py" width="250"/>
 </p>
 
 It includes a postprocessing function that uses:
 * Moving window average for distance and position
-* Calibrated model of the sensor (see /utils/dwm_calibration.py)
+* Calibrated model of the sensor (see /utils/dwm_calibration.py for the model design based on raw measurements)
 
-The communication with the DWM uses its UART API in generic mode and uses command 0x0C00 (see DWM API guide)
+The communication with the DWM uses PANS API in generic mode and uses UART TLV command 0x0C00 to get the position of the tags and the distance with anchors (see DWM API guide)
 
 ### Balboa (Arduino)
 #### BalboaRPiSlave.ino
-It includes the *Decawave DWM1001* reading. 
-It sends data requested by RPi via I²C and write received data from the RPi.
+* It sends data requested by RPi via I²C and write received data from the RPi (LEDs, buttons, buzzer, ...). From Polulu https://github.com/pololu/pololu-rpi-slave-arduino-library/tree/balboa/pi.
+* *Decawave DWM1001* reading. (From me)
 
 ## Setup & configuration
 ### RPi's
@@ -169,7 +232,8 @@ I use an ssh connection with each of my RPi's by connecting them to hotspot beca
 Currently, the setup is complete on the RPis. You can connect to them by setting a hotspot with following credentials:
 * SSID: Romain
 * password: yiwi9000
-If you need to do the setup again, follow the instructions hereafter.
+
+**If you need to do the setup again**, follow the instructions hereafter.
 
 #### Bluetooth
 Before everything, you should:
@@ -264,7 +328,7 @@ You should get 'dwm>' allowing the laptotp to send commands (type help to see).
 
 On some RPis, data could be sent automatically. It can be solved by removing the line containing serial0 in /boot/firmware/cmdline.txt
 
-The setup of each node should be done using the mobile app, see the DWM documentation.
+The setup of each node should be done using the RTLS mobile app, see the DWM documentation.
 
 ## Examples
 For these examples, bluetooth and I²C communication need to be setup before the first use as described in the previous section. The setup is already operational on the RPis, you can access them by setting a hotspot with the following credentials:
@@ -280,17 +344,13 @@ Before each of these example, you should specify your setup by setting the follo
 
 ### Consensus
 This is an example of a **synchronous** communication
-A consensus algorithm will make the RPi graph to converge toward the same state without direct communication.
+
+A consensus algorithm will make the agents to converge toward the same state without direct communication.
 This example contains a very basic algorithm that performs the **average between the RPi state and its neighbors states** that have been sent over Bluetooth.
 
 <p align="center">
-  <img src="images/consensus.jpeg" alt="consensus" width="300"/>
+  <img src="Images/consensus.jpeg" alt="consensus" width="150"/>
 </p>
-
-It uses:
-* Bluetooth
-* Sync
-* May include Balboa to use leds
 
 ```
 Usage: python consensus.py <ID> <init_state> <i2c>
@@ -304,13 +364,8 @@ This is an example of a **multi-process** synchronous communication
 This algorithm uses the same basic algorithm of the previous consensus example, but on 2 values: phase and frequency. The blinking of the leds of the Balboa reflects both states.
 
 <p align="center">
-  <img src="images/synchro.jpeg" alt="synchro" width="400"/>
+  <img src="Images/multi.jpeg" alt="synchro" width="400"/>
 </p>
-
-It uses:
-* Bluetooth
-* 2x Sync (phase and frequency)
-* Balboa
 
 ```
 Usage: python synchro.py <ID> <init_frequency>
@@ -323,14 +378,8 @@ The purpose is to localize a target using agents at known position with distance
 The measurements are done using Decawave DWM1001 UWB modules.
 
 <p align="center">
-  <img src="images/localize.jpeg" alt="localize" width="400"/>
+  <img src="Images/localize.jpeg" alt="localize" width="350"/>
 </p>
-
-It uses:
-* Balboa
-* DWM
-* Sync
-* Bluetooth
 
 The next state is computed based on position of agent and distance up to the target, using the gradient descent algorithm.
 All agent will converge toward the same target position, despite the fact that the graph is not fully connected.
@@ -344,17 +393,12 @@ ID is the index of the current RPi in bluetooth.RPIS_MACS
 
 ### StandUp
 This is an example of **asynchronous** communication
-This example will make the Balboa stand up like dominos. If a Balboa is down and one of its neighbors is up, it will stand up.
+This example will make the Balboa stand up like dominoes. If a Balboa is down and one of its neighbors is up, it will stand up.
 
 <p align="center">
-  <img src="images/standup.jpeg" alt="standup" width="400"/>
+  <img src="Images/standup.jpeg" alt="standup" width="400"/>
 </p>
 
-It uses:
-* Bluetooth
-* Async 
-* Balboa
-* Balancing
 ```
 Usage: python standup.py <ID>
 ```
@@ -365,7 +409,7 @@ The delay of asynchronous communication should be high enough to be safe with th
 
 ## Scripts
 
-I created 4 bash scripts that aim to facilitate and accelerate the testing process and interaction with the swarm. 
+4 bash scripts that aim to facilitate and accelerate the testing process and interaction with the swarm have been designed based on ssh. 
 Indeed, uploading each file manually using Filezilla with different parameters and executing each of them separately on each RPi could take time. Same for doing some plots.
 
 Before running these scripts, make sure the execution permission is set or run:

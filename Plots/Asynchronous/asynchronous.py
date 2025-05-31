@@ -1,9 +1,15 @@
 import matplotlib.pyplot as plt
 import os
-from matplotlib.patches import Circle, ConnectionPatch
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import glob
 plt.rcParams.update({'font.size': 18})
+
+
+"""
+* Master's Thesis *
+Implementation of a robotic swarm platform
+based on the Balboa self-balancing robot
+© 2025 Romain Englebert
+"""
 
 
 n = 30  # Number of iterations
@@ -44,7 +50,7 @@ zoom_time = []
 zoom_values = []
 
 j = 0
-colors = ['#1f77b4',  # Bleu classique (primary)
+colors = ['#1f77b4',  # Bleu classique
           '#9467bd',   # Violet doux
           '#ff7f0e',  # Orange doux
           '#2ca02c',  # Vert équilibré

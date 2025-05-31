@@ -7,6 +7,16 @@ from matplotlib.colors import LinearSegmentedColormap
 
 
 plt.rcParams.update({'font.size': 18})
+
+
+"""
+* Master's Thesis *
+Implementation of a robotic swarm platform
+based on the Balboa self-balancing robot
+© 2025 Romain Englebert
+"""
+
+
 WINDOW_SIZE = 5
 
 
@@ -99,8 +109,8 @@ def compute_model(data):
     print(actual_positions)
     regressor.fit(measured_positions, actual_positions)
 
-    A = regressor.coef_          # Matrice 2x2 de transformation
-    b = regressor.intercept_     # Vecteur 2D de décalage
+    A = regressor.coef_
+    b = regressor.intercept_
     y_pred = regressor.predict(measured_positions)
 
     print("------- Calibrated model -------\n")
@@ -120,7 +130,7 @@ def calibrate(data, A, b):
 
 def show(data, cal):
 
-    plt.figure(figsize=(10, 10))
+    plt.figure(figsize=(8, 8))
     colors = [
         '#1f77b4',  # bleu
         '#ff7f0e',  # orange
@@ -148,24 +158,23 @@ def show(data, cal):
         bound = bound[i]
         calibrated_data = cal[i]
 
-        #plot un cercle de centre d
         theta = np.linspace(0, 2 * np.pi, 200)
         circle_x = mean_meas[0] + bound * np.cos(theta)
         circle_y = mean_meas[1] + bound * np.sin(theta)
         if idx == 0:
-            plt.plot(circle_x, circle_y, linestyle='--', color=colors[idx % len(colors)])
+            """plt.plot(circle_x, circle_y, linestyle='--', color=colors[idx % len(colors)])
             plt.plot(filtered_data[:, 0], filtered_data[:, 1], color=colors[idx % len(colors)])
             plt.scatter(data_i[:, 0], data_i[:, 1], color='tab:grey', alpha=0.2, label='Measurements')
             plt.scatter(outliers[:, 0], outliers[:, 1], color='tab:red', alpha=0.5, label='Outliers')
-            plt.scatter(calibrated_data[:, 0], calibrated_data[:, 1], color='tab:green', alpha=0.5, label='Calibrated data')
-            plt.scatter(i[0], i[1], marker='2', s=500, color=colors[idx % len(colors)])
+            plt.scatter(calibrated_data[:, 0], calibrated_data[:, 1], color='tab:green', alpha=0.5, label='Calibrated data')"""
+            plt.scatter(i[0], i[1], marker='X', s=200, color=colors[idx % len(colors)])
         else:
-            plt.plot(circle_x, circle_y, linestyle='--', color=colors[idx%len(colors)])
+            """plt.plot(circle_x, circle_y, linestyle='--', color=colors[idx%len(colors)])
             plt.plot(filtered_data[:,0], filtered_data[:,1], color=colors[idx%len(colors)])
             plt.scatter(data_i[:,0], data_i[:,1], color='tab:grey', alpha=0.2)
             plt.scatter(outliers[:,0], outliers[:,1], color='tab:red', alpha=0.5)
-            plt.scatter(calibrated_data[:,0], calibrated_data[:,1], color='tab:green', alpha=0.5)
-            plt.scatter(i[0], i[1], marker='2', s=500, color=colors[idx%len(colors)])
+            plt.scatter(calibrated_data[:,0], calibrated_data[:,1], color='tab:green', alpha=0.5)"""
+            plt.scatter(i[0], i[1], marker='X', s=200, color=colors[idx%len(colors)])
         plt.xlabel('X (cm)')
         plt.ylabel('Y (cm)')
 
@@ -263,7 +272,7 @@ def plot_combined_errors(data, cal):
     print(raw_errors_norm)
     print(errors_norm)
     print(f"Mean error before calibration (cm): {np.mean(raw_error)}")
-    print(f"RMS error before calibration (cm): {np.sqrt(np.mean(raw_error ** 2))}")
+    print(f"RMS error before calibration (cm): {np.sqrt(np.mean((raw_error-np.mean(raw_error)) ** 2))}")
     print(f"Mean error after calibration(cm): {np.mean(cal_error)}")
     print(f"RMS error after calibration (cm): {np.sqrt(np.mean(cal_error ** 2))} (cm)")
 
@@ -308,16 +317,13 @@ print(data)
 print(GT)
 
 d = (125,100)
-#histogram(d, data)
+histogram(d, data)
 filtered_data = filter(data, WINDOW_SIZE)[0]
 
 A, b, y_pred = compute_model(filtered_data)
-#a, b = 0.95, -5
-#y_pred = set_model(filtered_data, a, b)
 
 calibrated_data = calibrate(filtered_data, A, b)
 show(data, calibrated_data)
-#cal_error(calibrated_data)
 plot_combined_errors(data, calibrated_data)
 
 plt.figure(figsize=(10, 6))

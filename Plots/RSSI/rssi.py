@@ -4,6 +4,15 @@ import numpy as np
 import glob
 import os
 
+
+"""
+* Master's Thesis *
+Implementation of a robotic swarm platform
+based on the Balboa self-balancing robot
+© 2025 Romain Englebert
+"""
+
+
 # Charger tous les fichiers CSV de type "rssi_*.csv"
 csv_files = glob.glob("rssi_*.csv")
 

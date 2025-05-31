@@ -2,7 +2,8 @@ import smbus
 import struct
 import time
 import threading
-
+# Copyright Pololu Corporation.  For more information, see https://www.pololu.com/
+# The code has been modified by Romain Englebert
 SLAVE_ADDRESS = 20
 
 class Balboa:

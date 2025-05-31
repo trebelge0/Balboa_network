@@ -1,3 +1,6 @@
+# Copyright Pololu Corporation.  For more information, see https://www.pololu.com/
+# The code has been modified by Romain Englebert
+
 import time
 import threading
 

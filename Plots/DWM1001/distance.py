@@ -3,7 +3,15 @@ from collections import defaultdict
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.linear_model import LinearRegression
-plt.rcParams.update({'font.size': 18})
+plt.rcParams.update({'font.size': 16})
+
+
+"""
+* Master's Thesis *
+Implementation of a robotic swarm platform
+based on the Balboa self-balancing robot
+© 2025 Romain Englebert
+"""
 
 
 GT = [25, 50, 70, 75, 90.14, 100, 113, 125, 145.77, 150]
@@ -45,14 +53,14 @@ def histogram(d, data):
     lower_bound = Q1 - 1.5 * IQR
     upper_bound = Q3 + 1.5 * IQR
 
-    plt.figure(figsize=(10, 6))
-    plt.hist(data[d])
+    plt.figure(figsize=(8, 6))
+    plt.hist(data[d], bins=10, color='skyblue', density=True, edgecolor='black')
     plt.axvline(x=d, color='red', linestyle='--', label='Actual distance')
     plt.axvline(x=lower_bound, color='black', linestyle='--', label='IQR bounds')
     plt.axvline(x=upper_bound, color='black', linestyle='--')
     plt.xlabel("Distance classes (cm)")
     plt.ylabel("Occurences")
-    plt.legend()
+    plt.legend(bbox_to_anchor=(0.15,0.8), fontsize=15)
     plt.grid()
     plt.tight_layout()
     plt.savefig(f"histo_dist_{d}.png")
@@ -101,19 +109,20 @@ def plot_filter(data, d):
         if x[i] in outliers:
             outliers_dict[i] = x[i]
 
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(8, 6))
     plt.scatter(range(len(x)), x, alpha=0.9, label='Filtered')
     plt.scatter(outliers_dict.keys(), outliers_dict.values(), alpha=0.9, color='red', label='Outlier')
     plt.plot(np.arange(0, len(x), 1), [upper_bound] * len(x), alpha=0.9, linestyle='--', color='black',
-             label='Outlier bounds')
+             label='IQR bounds')
     plt.plot(np.arange(0, len(x), 1), [lower_bound] * len(x), alpha=0.9, linestyle='--', color='black')
     plt.plot(np.arange(0, len(x), 1), [2.25] * len(x), alpha=0.9, linestyle='--', color='red',
              label='Actual distance')
-    plt.plot(x_bar, color='orange', linewidth=2, label=f'Moving average (window size: {WINDOW_SIZE})')
+    plt.plot(x_bar, color='orange', linewidth=2, label=f'Moving average (WS: {WINDOW_SIZE})')
     plt.xlabel('Measures')
-    plt.ylabel('Measured distance (m)')
+    plt.ylabel('Measured distance (cm)')
     plt.grid()
-    plt.legend(loc='lower right')
+    plt.legend(loc="center left", fontsize=15)
+    #plt.legend(bbox_to_anchor=(0.05, 0.1), fontsize=15)
     plt.tight_layout()
     plt.savefig(f'filt_dist_{WINDOW_SIZE}.png')
     plt.show()
@@ -160,15 +169,15 @@ def error(data, y_pred, outliers):
 
     res_error = (y_pred - np.array(mean_measured_distances))
 
-    fig, axs = plt.subplots(2, 1, figsize=(10, 12))
+    fig, axs = plt.subplots(2, 1, figsize=(8, 12))
 
     for distance in data.keys():
         axs[0].scatter([distance] * len(data[distance]), data[distance], alpha=0.5)
 
     for distance in data.keys():
         axs[0].errorbar(distance, mean_values[distance], yerr=std_devs[distance], fmt='o', color='black')
-    axs[0].plot(GT, y_pred, color='red', label=r'Calibrated sensor model ($\hat{m}=ad+b$)')
-    axs[0].plot(GT, GT, label=r'Uncalibrated sensor model ($\hat{m}=d$)', linestyle='--')
+    axs[0].plot(GT, y_pred, color='red', label=r'Calibrated sensor model')
+    axs[0].plot(GT, GT, label=r'Uncalibrated sensor model', linestyle='--')
     axs[0].set_ylabel("Measured value: m (cm)")
     axs[0].legend()
     axs[0].grid(True)
@@ -196,9 +205,9 @@ def error(data, y_pred, outliers):
     print("------- Statistics -------")
     print()
     print(f"Mean error before calibration (cm): {np.mean(filtered_error)}")
-    print(f"RMS error before calibration (cm): {np.sqrt(np.mean(filtered_error ** 2))}")
+    print(f"RMS error before calibration (cm): {np.sqrt(np.mean((filtered_error - np.mean(filtered_error))** 2))}")
     print(f"Mean error after calibration(cm): {np.mean(res_error)}")
-    print(f"RMS error after calibration (cm): {np.sqrt(np.mean(res_error ** 2))} (cm)")
+    print(f"RMS error after calibration (cm): {np.sqrt(np.mean((res_error - np.mean(res_error))** 2))} (cm)")
 
 
 def cumulative_error(data, label, color):
@@ -225,7 +234,7 @@ GT_full = [25, 25, 50, 75, 100, 125, 150,
            90.14, 145.77, 145.77, 90.14]
 x = read_data(GT_full, "Final/full.csv")
 x = dict(sorted(x.items()))
-d = 113
+d = 50
 histogram(d, x)
 x_bar = filter(x, WINDOW_SIZE)
 outliers = x_bar[1]
