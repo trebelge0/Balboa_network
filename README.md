@@ -148,7 +148,7 @@ there will be 3 (pseudo) threads running this function.
 The binary data received in the Bluetooth() stage has to be deserialized into interpretable data. This is done through the following scheme, based on *struct* library.
 
 <p align="center">
-  <img src="Images/Reception.jpeg" alt="serialization" width="1000"/>
+  <img src="Images/Reception.jpeg" alt="serialization" width="500"/>
 </p>
 
 #### synchronous.py
@@ -408,6 +408,10 @@ The delay of asynchronous communication should be high enough to be safe with th
 
 
 ## Scripts
+
+<p align="center">
+  <img src="Images/deployment.png" alt="deployment.py" width="400"/>
+</p>
 
 4 bash scripts that aim to facilitate and accelerate the testing process and interaction with the swarm have been designed based on ssh. 
 Indeed, uploading each file manually using Filezilla with different parameters and executing each of them separately on each RPi could take time. Same for doing some plots.
